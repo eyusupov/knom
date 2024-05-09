@@ -37,28 +37,28 @@ def matches(triple1: Triple, triple2: Triple) -> bool:
     return bind(triple2, triple1) is not None
 
 
-def get_binding(x: Node, bindings: Bindings) -> Node:
+def get_node_binding(x: Node, bindings: Bindings) -> Node:
     assert isinstance(x, Variable | BNode)
     return bindings.get(x, BNode()) if is_var(x) else x
 
 
 def assign(triple: Triple, bindings: Bindings) -> Triple:
     return (
-        get_binding(triple[0], bindings),
-        get_binding(triple[1], bindings),
-        get_binding(triple[2], bindings),
+        get_node_binding(triple[0], bindings),
+        get_node_binding(triple[1], bindings),
+        get_node_binding(triple[2], bindings),
     )
 
 
-def get_mask(x: Node, bindings: Bindings) -> Node | None:
+def get_node_mask(x: Node, bindings: Bindings) -> Node | None:
     assert isinstance(x, Variable | BNode)
     return bindings.get(x, None) if is_var(x) else None if is_bnode(x) else x
 
 def mask(triple: Triple, bindings: Bindings) -> Mask:
     return (
-        get_mask(triple[0], bindings),
-        get_mask(triple[1], bindings),
-        get_mask(triple[2], bindings),
+        get_node_mask(triple[0], bindings),
+        get_node_mask(triple[1], bindings),
+        get_node_mask(triple[2], bindings),
     )
 
 
