@@ -2,12 +2,7 @@ from rdflib import BNode, Literal, Namespace, Variable
 
 from knom import node_matches
 
-EX = Namespace("http://example.com/")
-
-var_a = Variable("a")
-var_b = Variable("b")
-lit_a = Literal("a")
-lit_b = Literal("b")
+from . import EX, lit_a, lit_b, var_a, var_b
 
 
 def test_matches_two_vars_match() -> None:

@@ -1,18 +1,8 @@
-from rdflib import BNode, Literal, Namespace, Variable
+from rdflib import BNode
 
 from knom import bind
 
-EX = Namespace("http://example.com/")
-
-var_a = Variable("a")
-var_b = Variable("b")
-var_c = Variable("c")
-lit_a = Literal("a")
-lit_b = Literal("b")
-lit_c = Literal("c")
-bn_a = BNode("a")
-bn_b = BNode("b")
-bn_c = BNode("c")
+from . import EX, bn_a, bn_b, bn_c, lit_a, lit_b, lit_c, var_a, var_b, var_c
 
 
 def test_bind_var_to_bns() -> None:
