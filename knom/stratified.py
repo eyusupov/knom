@@ -3,9 +3,13 @@ from collections.abc import Iterable
 
 from rdflib import Graph
 
-from knom import Triple, matches, single_pass
+from knom import Triple, bind, single_pass
 
 Dependencies = set[tuple[Triple, Triple]]
+
+
+def matches(triple1: Triple, triple2: Triple) -> bool:
+    return bind(triple1, triple2) is not None
 
 
 def calculate_clause_dependencies(

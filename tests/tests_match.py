@@ -1,4 +1,4 @@
-from knom import matches
+from knom.stratified import matches
 
 from . import EX, bn_a, bn_b, bn_c, var_a, var_b
 

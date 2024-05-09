@@ -83,24 +83,17 @@ def test_bind_bn_to_different_lits() -> None:
 
 def test_bind_var_to_var() -> None:
     bindings = bind((var_a, lit_b, lit_c), (var_b, lit_b, lit_c))
-    assert bindings is not None
-    assert len(bindings.keys()) == 1
-    assert isinstance(bindings[var_a], BNode)
+    assert bindings == { var_a: var_b }
 
 
 def test_bind_bn_to_var() -> None:
     bindings = bind((bn_a, lit_b, lit_c), (var_b, lit_b, lit_c))
-    assert bindings is not None
-    assert len(bindings.keys()) == 1
-    assert isinstance(bindings[bn_a], BNode)
+    assert bindings == { bn_a: var_b }
 
 
 def test_bind_bn_to_bn() -> None:
     bindings = bind((bn_a, bn_b, lit_c), (bn_a, bn_c, lit_c))
-    assert bindings == {
-        bn_a: bn_a,
-        bn_b: bn_c,
-    }
+    assert bindings == { bn_a: bn_a, bn_b: bn_c }
 
 
 def test_bind_uriref_to_urifef() -> None:
