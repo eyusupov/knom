@@ -25,7 +25,7 @@ def bind(triple1, triple2):
 
 
 def matches(triple1, triple2):
-    return bind(triple2, triple1) is not None  # noqa: W1114
+    return bind(triple2, triple1) is not None
 
 
 def assign(triple, binding):
@@ -50,7 +50,6 @@ def match_head(facts, head, bound=set(), bindings={}):
             yield binding
         else:
             yield match_head(facts, head[1:], bound.union(set(fact)), binding)
-    return None
 
 
 def single_pass(facts, rules):
