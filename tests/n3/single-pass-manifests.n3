@@ -5,21 +5,19 @@
 [] a mf:Manifest ;
   mf:name "single bottom-up inference pass";
   mf:entries (
-    :single_pass_empty
-    :simple_match
+    [
+      mf:name "No facts and no rules";
+      mf:action <single-pass/empty.n3>;
+      mf:result <single-pass/empty.n3>
+    ]
+    [
+      mf:name "Simple rule matching a fact";
+      mf:action <single-pass/simple-match.n3>;
+      mf:result <single-pass/simple-match-ref.n3>
+    ]
+    [
+      mf:name "Variable ";
+      mf:action <single-pass/variable.n3>;
+      mf:result <single-pass/variable-ref.n3>
+    ]
   ).
-
-:single_pass_empty
-  mf:name "No facts and no rules";
-  mf:action <single-pass/empty.n3>;
-  mf:result <single-pass/empty.n3>.
-
-:simple_match
-  mf:name "Simple rule matching a fact";
-  mf:action <single-pass/simple-match.n3>;
-  mf:result <single-pass/simple-match-ref.n3>.
-
-:simple_match
-  mf:name "Simple rule matching a fact";
-  mf:action <single-pass/simple-match.n3>;
-  mf:result <single-pass/simple-match-ref.n3>.

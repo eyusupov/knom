@@ -3,7 +3,6 @@ from collections.abc import Iterable, Iterator
 from rdflib import BNode, Graph, Literal, Namespace, URIRef, Variable
 from rdflib.term import Node
 
-from knom.util import is_var
 
 LOG = Namespace("http://www.w3.org/2000/10/swap/log#")
 
@@ -19,11 +18,11 @@ def bind(vars_: Triple, vals: Triple) -> Bindings | None:
         if isinstance(var, BNode | Variable):
             if bindings.get(var, val) != val:
                 # A variable is already bound to a different value
-                return None  # (used in the match test)
+                return None
             bindings[var] = val
         elif isinstance(var, URIRef | Literal):
             if var != val:
-                return None  # (used in the match test)
+                return None
         else:
             raise TypeError
     return bindings
@@ -74,7 +73,9 @@ def match_head_clause(
         if fact in bound:
             continue
         binding = bind(head_first, fact)
-        if binding is None:
+        if binding is None or any(
+            isinstance(val, Variable) for val in binding.values()
+        ):
             continue
         bindings.update(binding)
         bound.add(fact)
