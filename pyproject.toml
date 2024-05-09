@@ -7,3 +7,13 @@ filterwarnings = [
 ]
 [tool.flake8]
 per-file-ignores = "tests: S101"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  "S101", # ignore asserts
+  # ignore docstrings. TODO: remove and document
+  "D103",
+  "D104",
+  #
+]

@@ -6,7 +6,8 @@ LOG = Namespace("http://www.w3.org/2000/10/swap/log#")
 
 
 def node_matches(n1, n2):
-    assert not is_graph(n1) and not is_graph(n2)
+    assert not is_graph(n1)
+    assert not is_graph(n2)
     return is_var(n1) or is_var(n2) or n1 == n2 or is_bnode(n1) or is_bnode(n2)
 
 
@@ -39,7 +40,11 @@ def mask(triple, bindings):
     )
 
 
-def match_head(facts, head, bound=set(), bindings={}):
+def match_head(facts, head, bound=None, bindings=None):
+    if bindings is None:
+        bindings = {}
+    if bound is None:
+        bound = set()
     mask_ = mask(head[0], bindings)
     for fact in facts.triples(mask_):
         if fact in bound:

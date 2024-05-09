@@ -15,7 +15,7 @@ def print_formula(formula):
     return "{" + ". ".join([print_triple(c) for c in formula]) + "}"
 
 
-def print_rule(rule):
+def print_rule(rule) -> str:
     head, implies, body = rule
     assert implies == LOG.implies
     return f"{print_formula(head)} => {print_formula(body)}"

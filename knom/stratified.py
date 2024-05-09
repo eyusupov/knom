@@ -7,7 +7,7 @@ from knom import matches, single_pass
 
 def calculate_clause_dependencies(all_clauses):
     depends = set()
-    for clause1 in enumerate(all_clauses):
+    for clause1 in all_clauses:
         for clause2 in all_clauses:
             if clause1 == clause2:
                 continue
@@ -29,7 +29,7 @@ def stratify_clauses(all_clauses, depends):
     stratas = {c: 0 for c in all_clauses}
     while True:
         stratified = True
-        for i, clause1 in enumerate(all_clauses):
+        for clause1 in all_clauses:
             for clause2 in all_clauses:
                 if clause1 == clause2:
                     continue
