@@ -1,9 +1,29 @@
+from rdflib import Namespace
 from pygraphviz import AGraph
+from knom import LOG
+
+
+# TODO: remove
+EX = Namespace('http://example.com/')
+
+
+def print_triple(triple):
+    return ", ".join([c.toPython().replace(EX, ":") for c in triple])
+
+
+def print_formula(formula):
+    return "{" + ". ".join([print_triple(c) for c in formula]) + "}"
+
+
+def print_rule(rule):
+    head, implies, body = rule
+    assert implies == LOG.implies
+    return f'{print_formula(head)} => {print_formula(body)}'
 
 
 def draw_clause_dependencies_graph(clause_dependencies):
     dot = AGraph(directed=True)
-    for clause1, clause2 in depends:
+    for clause1, clause2 in clause_dependencies:
         c1 = print_triple(clause1)
         dot.add_node(c1)
         c2 = print_triple(clause2)
