@@ -28,5 +28,5 @@ ignore = [
 ]
 
 [[tool.mypy.overrides]]
-module = "pygraphviz"
+module = ["pygraphviz", "pytest"]
 ignore_missing_imports = true

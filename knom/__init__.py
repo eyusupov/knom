@@ -57,7 +57,7 @@ def mask(triple: Triple, bindings: Bindings) -> Mask:
     )
 
 
-def match_head(
+def match_head_clause(
     facts: Graph,
     head_first: Triple,
     head_rest: Iterator[Triple],
@@ -74,14 +74,22 @@ def match_head(
             continue
         binding = bind(head_first, fact)
         if binding is None:
-            raise AssertionError
+            continue
         bindings.update(binding)
         bound.add(fact)
         try:
             head_next = next(head_rest)
-            yield from match_head(facts, head_next, head_rest, bound, binding)
+            yield from match_head_clause(facts, head_next, head_rest, bound, bindings)
         except StopIteration:
-            yield binding
+            yield bindings
+
+
+def match_head(
+    facts: Graph,
+    head: Iterable[Triple],
+) -> Iterator[Bindings]:
+    head_iter = iter(head)
+    return match_head_clause(facts, next(head_iter), head_iter)
 
 
 def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
@@ -89,8 +97,7 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
         assert isinstance(head, Graph)
         assert implies == LOG.implies
         assert isinstance(body, Graph)
-        head_iter = iter(head)
-        for binding in match_head(facts, next(head_iter), head_iter):
+        for binding in match_head(facts, head):
             for body_clause in body:
                 new_tuple = assign(body_clause, binding)
                 yield new_tuple
