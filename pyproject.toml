@@ -1,13 +1,14 @@
 [project]
 name = "knom"
 requires-python = ">=3.10"
-[tool.nitpick]
-style = "https://raw.githubusercontent.com/wemake-services/wemake-python-styleguide/master/styles/nitpick-style.toml"
+version = "0.0.1"
+
 [tool.pytest.ini_options]
 filterwarnings = [
   "ignore:pkg_resources is deprecated as an API.:DeprecationWarning", # RDFlib
   "ignore:Deprecated call to `pkg_resources.declare_namespace:DeprecationWarning" # RDFlib
 ]
+
 [tool.flake8]
 per-file-ignores = "tests: S101"
 
