@@ -19,11 +19,11 @@ def bind(vars_: Triple, vals: Triple) -> Bindings | None:
         if isinstance(var, BNode | Variable):
             if bindings.get(var, val) != val:
                 # A variable is already bound to a different value
-                return None # (used in the match test)
+                return None  # (used in the match test)
             bindings[var] = val
         elif isinstance(var, URIRef | Literal):
             if var != val:
-                return None # (used in the match test)
+                return None  # (used in the match test)
         else:
             raise TypeError
     return bindings
@@ -45,7 +45,7 @@ def assign(triple: Triple, bindings: Bindings) -> Triple:
 def get_node_mask(x: Node, bindings: Bindings) -> Node | None:
     if isinstance(x, Variable | BNode):
         return bindings.get(x, None)
-    assert(isinstance(x, URIRef | Literal))
+    assert isinstance(x, URIRef | Literal)
     return x
 
 

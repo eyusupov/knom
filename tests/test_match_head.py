@@ -10,7 +10,8 @@ def test_match_head() -> None:
     facts.add((EX.a, EX.b, EX.c))
     head = [(EX.a, EX.b, EX.c)]
     bindings = list(match_head(facts, head))
-    assert(bindings == [{}])
+    assert bindings == [{}]
+
 
 def test_match_head_with_vars() -> None:
     facts = Graph()
@@ -23,6 +24,7 @@ def test_match_head_with_vars() -> None:
         var_b: EX.b,
     }
 
+
 def test_match_head_same_var() -> None:
     facts = Graph()
     facts.add((EX.a, EX.a, EX.c))
@@ -33,12 +35,14 @@ def test_match_head_same_var() -> None:
         var_a: EX.a,
     }
 
+
 def test_match_head_with_vars_conflict() -> None:
     facts = Graph()
     facts.add((EX.a, EX.b, EX.c))
     head = [(var_a, var_a, EX.c)]
     bindings = list(match_head(facts, head))
     assert bindings == []
+
 
 def test_match_head_with_vars_conflict_in_clauses() -> None:
     facts = Graph()
@@ -47,6 +51,7 @@ def test_match_head_with_vars_conflict_in_clauses() -> None:
     head = [(var_a, var_a, EX.c), (var_a, EX.c, EX.c)]
     bindings = list(match_head(facts, head))
     assert bindings == []
+
 
 def test_match_head_with_vars_multiple_clauses() -> None:
     facts = Graph()
@@ -60,6 +65,7 @@ def test_match_head_with_vars_multiple_clauses() -> None:
         var_b: EX.q,
     }
 
+
 def test_match_head_with_bnodes() -> None:
     facts = Graph()
     facts.add((EX.a, EX.b, bn_b))
@@ -71,6 +77,7 @@ def test_match_head_with_bnodes() -> None:
         bn_c: bn_b,
     }
 
+
 def test_match_head_same_bnode() -> None:
     facts = Graph()
     facts.add((EX.a, EX.a, EX.c))
@@ -81,12 +88,14 @@ def test_match_head_same_bnode() -> None:
         bn_a: EX.a,
     }
 
+
 def test_match_head_with_bnodes_conflict() -> None:
     facts = Graph()
     facts.add((EX.a, EX.b, EX.c))
     head = [(bn_a, bn_a, EX.c)]
     bindings = list(match_head(facts, head))
     assert bindings == []
+
 
 def test_match_head_with_bnodes_conflict_in_clauses() -> None:
     facts = Graph()
@@ -95,6 +104,7 @@ def test_match_head_with_bnodes_conflict_in_clauses() -> None:
     head = [(bn_a, bn_a, EX.c), (bn_a, EX.c, EX.c)]
     bindings = list(match_head(facts, head))
     assert bindings == []
+
 
 def test_match_head_with_bnodes_multiple_clauses() -> None:
     facts = Graph()
