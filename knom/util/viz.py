@@ -1,27 +1,29 @@
+from collections.abc import AbstractSet
+
 from pygraphviz import AGraph
-from rdflib import Namespace
+from rdflib import Graph, Namespace
 
-from knom import LOG
+from knom import LOG, Triple
 
-# TODO: remove
+# TODO(eyusupov): remove
 EX = Namespace("http://example.com/")
 
 
-def print_triple(triple):
+def print_triple(triple: Triple) -> str:
     return ", ".join([c.toPython().replace(EX, ":") for c in triple])
 
 
-def print_formula(formula):
+def print_formula(formula: Graph) -> str:
     return "{" + ". ".join([print_triple(c) for c in formula]) + "}"
 
 
-def print_rule(rule) -> str:
+def print_rule(rule: Triple) -> str:
     head, implies, body = rule
     assert implies == LOG.implies
     return f"{print_formula(head)} => {print_formula(body)}"
 
 
-def draw_clause_dependencies_graph(clause_dependencies):
+def draw_clause_dependencies_graph(clause_dependencies: AbstractSet[Triple]) -> AGraph:
     dot = AGraph(directed=True)
     for clause1, clause2 in clause_dependencies:
         c1 = print_triple(clause1)

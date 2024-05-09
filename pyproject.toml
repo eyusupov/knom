@@ -1,3 +1,6 @@
+[project]
+name = "knom"
+requires-python = ">=3.10"
 [tool.nitpick]
 style = "https://raw.githubusercontent.com/wemake-services/wemake-python-styleguide/master/styles/nitpick-style.toml"
 [tool.pytest.ini_options]
@@ -18,5 +21,5 @@ ignore = [
   "D104",
   # fix ruff warnings
   "D211", # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible.
-  "D213"  # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible.
+  "D213", # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible.
 ]

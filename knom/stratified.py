@@ -1,11 +1,16 @@
 import itertools
+from collections.abc import AbstractSet, Iterable
 
 from rdflib import Graph
 
-from knom import matches, single_pass
+from knom import Triple, matches, single_pass
+
+Dependencies = AbstractSet[tuple(Triple, Triple)]
 
 
-def calculate_clause_dependencies(all_clauses):
+def calculate_clause_dependencies(
+    all_clauses: Iterable[Triple],
+) -> Dependencies:
     depends = set()
     for clause1 in all_clauses:
         for clause2 in all_clauses:
@@ -17,7 +22,7 @@ def calculate_clause_dependencies(all_clauses):
     return depends
 
 
-def get_all_clauses(rules):
+def get_all_clauses(rules: Graph) -> Iterable[Triple]:
     all_clauses = set()
     for head, _, body in rules:
         all_clauses.update(head)
@@ -25,7 +30,10 @@ def get_all_clauses(rules):
     return list(all_clauses)
 
 
-def stratify_clauses(all_clauses, depends):
+def stratify_clauses(
+    all_clauses: Iterable[Triple],
+    depends: Dependencies,
+) -> dict[int, Triple]:
     stratas = {c: 0 for c in all_clauses}
     while True:
         stratified = True
@@ -45,7 +53,7 @@ def stratify_clauses(all_clauses, depends):
     return stratas
 
 
-def stratify_rules(rules):
+def stratify_rules(rules: Graph) -> Iterable[Graph]:
     all_clauses = get_all_clauses(rules)
     depends = calculate_clause_dependencies(all_clauses)
     clause_stratas = stratify_clauses(all_clauses, depends)
@@ -60,7 +68,7 @@ def stratify_rules(rules):
     return [rule_stratas[i] for i in sorted(rule_stratas.keys())]
 
 
-def stratified(rules, facts):
+def stratified(rules: Graph, facts: Graph) -> Graph:
     stratas = stratify_rules(rules)
     inferred = Graph()
     for strata in stratas:
