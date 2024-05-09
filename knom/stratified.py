@@ -1,11 +1,11 @@
 import itertools
-from collections.abc import AbstractSet, Iterable
+from collections.abc import Iterable
 
 from rdflib import Graph
 
 from knom import Triple, matches, single_pass
 
-Dependencies = AbstractSet[tuple(Triple, Triple)]
+Dependencies = set[tuple[Triple, Triple]]
 
 
 def calculate_clause_dependencies(
@@ -23,8 +23,10 @@ def calculate_clause_dependencies(
 
 
 def get_all_clauses(rules: Graph) -> Iterable[Triple]:
-    all_clauses = set()
+    all_clauses: set[Triple]  = set()
     for head, _, body in rules:
+        assert isinstance(head, Graph)
+        assert isinstance(body, Graph)
         all_clauses.update(head)
         all_clauses.update(body)
     return list(all_clauses)
@@ -33,7 +35,7 @@ def get_all_clauses(rules: Graph) -> Iterable[Triple]:
 def stratify_clauses(
     all_clauses: Iterable[Triple],
     depends: Dependencies,
-) -> dict[int, Triple]:
+) -> dict[Triple, int]:
     stratas = {c: 0 for c in all_clauses}
     while True:
         stratified = True
@@ -53,14 +55,16 @@ def stratify_clauses(
     return stratas
 
 
-def stratify_rules(rules: Graph) -> Iterable[Graph]:
+def stratify_rules(rules: Graph) -> Iterable[Iterable[Triple]]:
     all_clauses = get_all_clauses(rules)
     depends = calculate_clause_dependencies(all_clauses)
     clause_stratas = stratify_clauses(all_clauses, depends)
 
-    rule_stratas = {}
+    rule_stratas: dict[int, list[Triple]] = {}
     for rule in rules:
         head, _, body = rule
+        assert isinstance(head, Graph)
+        assert isinstance(body, Graph)
         strata = max([clause_stratas[clause] for clause in itertools.chain(head, body)])
         if strata not in rule_stratas:
             rule_stratas[strata] = []

@@ -1,16 +1,19 @@
-from collections.abc import AbstractSet
-
 from pygraphviz import AGraph
-from rdflib import Graph, Namespace
+from rdflib import BNode, Graph, Literal, Namespace, URIRef
+from rdflib.term import Node
 
 from knom import LOG, Triple
+from knom.stratified import Dependencies
 
 # TODO(eyusupov): remove
 EX = Namespace("http://example.com/")
 
+def node_repr(node: Node) -> str:
+    assert isinstance(node, URIRef | Literal | BNode)
+    return node.toPython().replace(EX, ":")
 
 def print_triple(triple: Triple) -> str:
-    return ", ".join([c.toPython().replace(EX, ":") for c in triple])
+    return ", ".join([node_repr(c) for c in triple])
 
 
 def print_formula(formula: Graph) -> str:
@@ -20,10 +23,12 @@ def print_formula(formula: Graph) -> str:
 def print_rule(rule: Triple) -> str:
     head, implies, body = rule
     assert implies == LOG.implies
+    assert isinstance(head, Graph)
+    assert isinstance(body, Graph)
     return f"{print_formula(head)} => {print_formula(body)}"
 
 
-def draw_clause_dependencies_graph(clause_dependencies: AbstractSet[Triple]) -> AGraph:
+def draw_clause_dependencies_graph(clause_dependencies: Dependencies) -> AGraph:
     dot = AGraph(directed=True)
     for clause1, clause2 in clause_dependencies:
         c1 = print_triple(clause1)
