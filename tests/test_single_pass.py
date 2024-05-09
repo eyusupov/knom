@@ -2,6 +2,7 @@ from typing import T
 
 from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib.collection import Collection
+from rdflib.compare import to_canonical_graph
 
 from knom import LOG, single_pass
 
@@ -39,5 +40,7 @@ def test_single_pass(action: URIRef, result: URIRef) -> None:
             rules.add((s, p, o))
         else:
             facts.add((s, p, o))
-    output = single_pass(facts, rules)
-    assert list(output) == list(result_graph)
+    output = Graph()
+    for triple in single_pass(facts, rules):
+        output.add(triple)
+    assert list(to_canonical_graph(output)) == list(to_canonical_graph(result_graph))

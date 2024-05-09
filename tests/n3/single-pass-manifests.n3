@@ -16,8 +16,8 @@
       mf:result <single-pass/simple-match-ref.n3>
     ]
     [
-      mf:name "Variable ";
-      mf:action <single-pass/variable.n3>;
-      mf:result <single-pass/variable-ref.n3>
+      mf:name "Unbound variable in conclusion";
+      mf:action <single-pass/unbound-variable-in-conclusion.n3>;
+      mf:result <single-pass/unbound-variable-in-conclusion-ref.n3>
     ]
   ).
