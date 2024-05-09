@@ -1,5 +1,6 @@
 import itertools
-from knom import matches
+from rdflib import Graph
+from knom import matches, single_pass
 
 
 def calculate_clause_dependencies(all_clauses):
@@ -24,7 +25,6 @@ def get_all_clauses(rules):
 
 def stratify_clauses(all_clauses, depends):
     stratas = {c: 0 for c in all_clauses}
-    seen = set()
     while True:
         stratified = True
         for i, clause1 in enumerate(all_clauses):
@@ -58,14 +58,14 @@ def stratify_rules(rules):
 
 
 def stratified(rules, facts):
-    stratas = stratify_rules(rules) 
+    stratas = stratify_rules(rules)
+    inferred = Graph()
     for strata in stratas:
-        for rule in rule_stratas[i]:
-            for new_tuple in single_pass(facts, rules):
-                inferred.add(new_tuple)
-            new_inferred = Graph()
-            for new_tuple in single_pass(inferred, rules):
-                new_inferred.add(new_tuple)
-            for new_tuple in new_inferred:
-                inferred.add(new_tuple)
-
+        for new_tuple in single_pass(facts, strata):
+            inferred.add(new_tuple)
+        new_inferred = Graph()
+        for new_tuple in single_pass(inferred, strata):
+            new_inferred.add(new_tuple)
+        for new_tuple in new_inferred:
+            inferred.add(new_tuple)
+    return inferred
