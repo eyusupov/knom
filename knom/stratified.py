@@ -23,7 +23,7 @@ def calculate_clause_dependencies(
 
 
 def get_all_clauses(rules: Graph) -> Iterable[Triple]:
-    all_clauses: set[Triple]  = set()
+    all_clauses: set[Triple] = set()
     for head, _, body in rules:
         assert isinstance(head, Graph)
         assert isinstance(body, Graph)

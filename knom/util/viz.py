@@ -8,9 +8,11 @@ from knom.stratified import Dependencies
 # TODO(eyusupov): remove
 EX = Namespace("http://example.com/")
 
+
 def node_repr(node: Node) -> str:
     assert isinstance(node, URIRef | Literal | BNode)
     return node.toPython().replace(EX, ":")
+
 
 def print_triple(triple: Triple) -> str:
     return ", ".join([node_repr(c) for c in triple])

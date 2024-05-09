@@ -3,7 +3,7 @@ from collections.abc import Iterable, Iterator
 from rdflib import BNode, Graph, Namespace, Variable
 from rdflib.term import Node
 
-from knom.util import is_bnode, is_graph, is_var
+from knom.util import is_bnode, is_var
 
 LOG = Namespace("http://www.w3.org/2000/10/swap/log#")
 
