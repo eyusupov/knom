@@ -1,7 +1,7 @@
-from rdflib import Namespace
 from pygraphviz import AGraph
-from knom import LOG
+from rdflib import Namespace
 
+from knom import LOG
 
 # TODO: remove
 EX = Namespace("http://example.com/")

@@ -1,6 +1,6 @@
-from rdflib import Variable, Namespace, BNode, Literal
-from knom import node_matches
+from rdflib import BNode, Literal, Namespace, Variable
 
+from knom import node_matches
 
 EX = Namespace("http://example.com/")
 

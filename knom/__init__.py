@@ -1,6 +1,6 @@
-from rdflib import Graph, Namespace, BNode
-from knom.util import is_graph, is_bnode, is_var
+from rdflib import BNode, Graph, Namespace
 
+from knom.util import is_bnode, is_graph, is_var
 
 LOG = Namespace("http://www.w3.org/2000/10/swap/log#")
 

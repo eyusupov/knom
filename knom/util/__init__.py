@@ -1,4 +1,4 @@
-from rdflib import Variable, BNode, Graph
+from rdflib import BNode, Graph, Variable
 
 
 def is_var(node):

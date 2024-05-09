@@ -1,5 +1,7 @@
 import itertools
+
 from rdflib import Graph
+
 from knom import matches, single_pass
 
 
