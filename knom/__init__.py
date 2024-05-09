@@ -13,12 +13,6 @@ Mask = tuple[MaskElement, MaskElement, MaskElement]
 Bindings = dict[Variable | BNode, Node]
 
 
-def node_matches(n1: Node, n2: Node) -> bool:
-    assert not is_graph(n1)
-    assert not is_graph(n2)
-    return is_var(n1) or is_var(n2) or n1 == n2 or is_bnode(n1) or is_bnode(n2)
-
-
 def bind(vars_: Triple, vals: Triple) -> Bindings | None:
     bindings: Bindings = {}
     for var, val in zip(vars_, vals, strict=True):
