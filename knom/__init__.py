@@ -19,27 +19,30 @@ def node_matches(n1: Node, n2: Node) -> bool:
     return is_var(n1) or is_var(n2) or n1 == n2 or is_bnode(n1) or is_bnode(n2)
 
 
-def bind(triple1: Triple, triple2: Triple) -> Bindings | None:
+def bind(vars_: Triple, vals: Triple) -> Bindings | None:
     bindings: Bindings = {}
-    for x, y in zip(triple1, triple2, strict=True):
-        if is_var(y) or is_bnode(y):
-            assert isinstance(y, BNode | Variable)
-            binding = BNode() if is_var(x) else x
-            if bindings.get(y, bind) != binding:
+    for var, val in zip(vars_, vals, strict=True):
+        if isinstance(var, BNode | Variable):
+            binding = BNode() if is_var(val) else val
+            if bindings.get(var, binding) != binding:
+                # A variable is already bound to a different value
+                # (used in the match test)
                 return None
-            bindings[y] = binding
-        elif not is_var(x) and not is_var(y) and x != y:
+            bindings[var] = binding
+        elif not is_var(val) and not is_var(var) and var != val:
+            # Test that literals or uri refs are the same
+            # (used in the match test)
             return None
     return bindings
 
 
 def matches(triple1: Triple, triple2: Triple) -> bool:
-    return bind(triple2, triple1) is not None
+    return bind(triple1, triple2) is not None
 
 
-def get_node_binding(x: Node, bindings: Bindings) -> Node:
-    assert isinstance(x, Variable | BNode)
-    return bindings.get(x, BNode()) if is_var(x) else x
+def get_node_binding(var: Node, bindings: Bindings) -> Node:
+    assert isinstance(var, Variable | BNode)
+    return bindings.get(var, BNode()) if is_var(var) else var
 
 
 def assign(triple: Triple, bindings: Bindings) -> Triple:
@@ -53,6 +56,7 @@ def assign(triple: Triple, bindings: Bindings) -> Triple:
 def get_node_mask(x: Node, bindings: Bindings) -> Node | None:
     assert isinstance(x, Variable | BNode)
     return bindings.get(x, None) if is_var(x) else None if is_bnode(x) else x
+
 
 def mask(triple: Triple, bindings: Bindings) -> Mask:
     return (
@@ -77,7 +81,7 @@ def match_head(
     for fact in facts.triples(mask_):
         if fact in bound:
             continue
-        binding = bind(fact, head_clauses[0])
+        binding = bind(head_clauses[0], fact)
         if binding is None:
             raise AssertionError
         binding.update(bindings)

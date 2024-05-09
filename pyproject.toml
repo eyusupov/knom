@@ -15,7 +15,9 @@ per-file-ignores = "tests: S101"
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-  "S101", # ignore asserts
+  # ignore asserts warnings
+  "S101",
+  "B011",
   # ignore docstrings. TODO: remove and document
   "D100",
   "D103",
