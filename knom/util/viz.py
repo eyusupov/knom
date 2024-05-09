@@ -4,7 +4,7 @@ from knom import LOG
 
 
 # TODO: remove
-EX = Namespace('http://example.com/')
+EX = Namespace("http://example.com/")
 
 
 def print_triple(triple):
@@ -18,7 +18,7 @@ def print_formula(formula):
 def print_rule(rule):
     head, implies, body = rule
     assert implies == LOG.implies
-    return f'{print_formula(head)} => {print_formula(body)}'
+    return f"{print_formula(head)} => {print_formula(body)}"
 
 
 def draw_clause_dependencies_graph(clause_dependencies):

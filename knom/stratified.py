@@ -31,10 +31,11 @@ def stratify_clauses(all_clauses, depends):
             for clause2 in all_clauses:
                 if clause1 == clause2:
                     continue
-                if (clause1, clause2) in depends and stratas[clause2] <= stratas[clause1]:
+                tup = (clause1, clause2)
+                if tup in depends and stratas[clause2] <= stratas[clause1]:
                     stratas[clause2] += 1
                     stratified = False
-                if (clause2, clause1) in depends and stratas[clause1] <= stratas[clause2]:
+                if tup in depends and stratas[clause1] <= stratas[clause2]:
                     stratas[clause2] += 1
                     stratified = False
         if stratified:

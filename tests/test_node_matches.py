@@ -2,12 +2,12 @@ from rdflib import Variable, Namespace, BNode, Literal
 from knom import node_matches
 
 
-EX = Namespace('http://example.com/')
+EX = Namespace("http://example.com/")
 
-var_a = Variable('a')
-var_b = Variable('b')
-lit_a = Literal('a')
-lit_b = Literal('b')
+var_a = Variable("a")
+var_b = Variable("b")
+lit_a = Literal("a")
+lit_b = Literal("b")
 
 
 def test_two_vars_match():

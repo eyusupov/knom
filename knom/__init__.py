@@ -2,7 +2,7 @@ from rdflib import Graph, Namespace, BNode
 from knom.util import is_graph, is_bnode, is_var
 
 
-LOG = Namespace('http://www.w3.org/2000/10/swap/log#')
+LOG = Namespace("http://www.w3.org/2000/10/swap/log#")
 
 
 def node_matches(n1, n2):
@@ -33,7 +33,10 @@ def assign(triple, binding):
 
 
 def mask(triple, bindings):
-    return tuple(bindings.get(x, None) if is_var(x) else None if is_bnode(x) else x for x in triple)
+    return tuple(
+        bindings.get(x, None) if is_var(x) else None if is_bnode(x) else x
+        for x in triple
+    )
 
 
 def match_head(facts, head, bound=set(), bindings={}):
