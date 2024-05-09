@@ -1,4 +1,3 @@
-from rdflib import BNode
 
 from knom import bind
 

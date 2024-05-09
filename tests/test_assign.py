@@ -1,6 +1,6 @@
 from knom import assign
 
-from . import EX, bn_a, bn_b, bn_c, lit_a, lit_b, lit_c, var_a, var_b, var_c
+from . import EX, bn_a, lit_b, var_a, var_b, var_c
 
 
 def test_assign() -> None:
