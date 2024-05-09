@@ -1,3 +1,4 @@
 .cache
 __pycache__
 *@neomake_*
+knom.egg-info
