@@ -1,2 +1,9 @@
 [tool.nitpick]
 style = "https://raw.githubusercontent.com/wemake-services/wemake-python-styleguide/master/styles/nitpick-style.toml"
+[tool.pytest.ini_options]
+filterwarnings = [
+  "ignore:pkg_resources is deprecated as an API.:DeprecationWarning", # RDFlib
+  "ignore:Deprecated call to `pkg_resources.declare_namespace:DeprecationWarning" # RDFlib
+]
+[tool.flake8]
+per-file-ignores = "tests: S101"

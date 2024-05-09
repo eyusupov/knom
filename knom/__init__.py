@@ -1,12 +1,12 @@
-from rdflib import Graph, Namespace, Variable, URIRef, BNode, Literal, RDF, RDFS, OWL
-from rdflib.graph import QuotedGraph, ConjunctiveGraph
+from rdflib import Graph, Namespace, BNode
+from knom.util import is_graph, is_bnode, is_var
 
 
 LOG = Namespace('http://www.w3.org/2000/10/swap/log#')
 
 
 def node_matches(n1, n2):
-    assert not is_graph(n1) and not is_graph(n2) 
+    assert not is_graph(n1) and not is_graph(n2)
     return is_var(n1) or is_var(n2) or n1 == n2 or is_bnode(n1) or is_bnode(n2)
 
 
@@ -25,7 +25,7 @@ def bind(triple1, triple2):
 
 
 def matches(triple1, triple2):
-    return bind(triple2, triple1) != None
+    return bind(triple2, triple1) is not None  # noqa: W1114
 
 
 def assign(triple, binding):
@@ -58,13 +58,14 @@ def single_pass(facts, rules):
             for body_clause in body:
                 new_tuple = assign(body_clause, binding)
                 yield new_tuple
+    return inferred
 
 
 def naive_fixpoint(facts, rules):
     inferred = Graph()
     feed = facts
     while True:
-        new_feed = Graph()        
+        new_feed = Graph()
         old_inferred = len(inferred)
         for new_tuple in single_pass(feed, rules):
             inferred.add(new_tuple)
