@@ -30,8 +30,9 @@ def bind(vars_: Triple, vals: Triple) -> Bindings | None:
 
 
 def get_node_binding(var: Node, bindings: Bindings) -> Node:
-    assert isinstance(var, Variable | BNode)
-    return bindings.get(var, BNode()) if is_var(var) else var
+    if isinstance(var, Variable):
+        return bindings.get(var, BNode())
+    return var
 
 
 def assign(triple: Triple, bindings: Bindings) -> Triple:

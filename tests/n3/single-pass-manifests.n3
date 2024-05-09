@@ -1,0 +1,25 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <#>.
+
+[] a mf:Manifest ;
+  mf:name "single bottom-up inference pass";
+  mf:entries (
+    :single_pass_empty
+    :simple_match
+  ).
+
+:single_pass_empty
+  mf:name "No facts and no rules";
+  mf:action <single-pass/empty.n3>;
+  mf:result <single-pass/empty.n3>.
+
+:simple_match
+  mf:name "Simple rule matching a fact";
+  mf:action <single-pass/simple-match.n3>;
+  mf:result <single-pass/simple-match-ref.n3>.
+
+:simple_match
+  mf:name "Simple rule matching a fact";
+  mf:action <single-pass/simple-match.n3>;
+  mf:result <single-pass/simple-match-ref.n3>.
