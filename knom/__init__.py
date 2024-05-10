@@ -1,15 +1,10 @@
 from collections.abc import Iterable, Iterator
 
-from rdflib import BNode, Graph, Literal, Namespace, URIRef, Variable
+from rdflib import BNode, Graph, Literal, URIRef, Variable
 from rdflib.term import Node
 
-
-LOG = Namespace("http://www.w3.org/2000/10/swap/log#")
-
-Triple = tuple[Node, Node, Node]
-MaskElement = Node | None
-Mask = tuple[MaskElement, MaskElement, MaskElement]
-Bindings = dict[Variable | BNode, Node]
+from knom.typing import Bindings, Mask, Triple
+from knom.util import LOG, node_repr, print_rule, print_triple
 
 
 def bind(vars_: Triple, vals: Triple) -> Bindings | None:
