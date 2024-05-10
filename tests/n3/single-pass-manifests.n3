@@ -6,7 +6,7 @@
   mf:name "single bottom-up inference pass";
   mf:entries (
     [
-      mf:name "No facts and no rules";
+      mf:name "No facts and no rules produce empty result";
       mf:action <single-pass/empty.n3>;
       mf:result <single-pass/empty.n3>
     ]
@@ -16,17 +16,17 @@
       mf:result <single-pass/simple-match-ref.n3>
     ]
     [
-      mf:name "Unbound variable in conclusion";
+      mf:name "Unbound variable in conclusion produces a bnode";
       mf:action <single-pass/unbound-variable-in-conclusion.n3>;
       mf:result <single-pass/unbound-variable-in-conclusion-ref.n3>
     ]
     [
-      mf:name "Multiple clauses";
+      mf:name "Multiple clauses must all match";
       mf:action <single-pass/multi-clause.n3>;
       mf:result <single-pass/multi-clause-ref.n3>
     ]
     [
-      mf:name "Blank nodes";
+      mf:name "Blank nodes must mantain their relationships with other nodes";
       mf:action <single-pass/bnode.n3>;
       mf:result <single-pass/bnode-ref.n3>
     ]
