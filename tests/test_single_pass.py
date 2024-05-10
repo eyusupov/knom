@@ -25,7 +25,7 @@ def pytest_generate_tests(metafunc: T) -> None:
             assert result is not None, f"result is empty for {name}"
             assert isinstance(action, URIRef)
             assert isinstance(result, URIRef)
-            names.append(f"{mf_name}:{name}")
+            names.append(f"{mf_name}__{name}".replace(" ", "_"))
             parameters.append((action, result))
         metafunc.parametrize("action, result", parameters, ids=names)
 
