@@ -43,4 +43,4 @@ def test_single_pass(action: URIRef, result: URIRef) -> None:
     output = Graph()
     for triple in single_pass(facts, rules):
         output.add(triple)
-    assert list(to_canonical_graph(output)) == list(to_canonical_graph(result_graph))
+    assert set(to_canonical_graph(output)) == set(to_canonical_graph(result_graph))

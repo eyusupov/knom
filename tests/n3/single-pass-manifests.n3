@@ -20,4 +20,14 @@
       mf:action <single-pass/unbound-variable-in-conclusion.n3>;
       mf:result <single-pass/unbound-variable-in-conclusion-ref.n3>
     ]
+    [
+      mf:name "Multiple clauses";
+      mf:action <single-pass/multi-clause.n3>;
+      mf:result <single-pass/multi-clause-ref.n3>
+    ]
+    [
+      mf:name "Blank nodes";
+      mf:action <single-pass/bnode.n3>;
+      mf:result <single-pass/bnode-ref.n3>
+    ]
   ).
