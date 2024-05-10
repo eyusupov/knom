@@ -30,4 +30,9 @@
       mf:action <single-pass/bnode.n3>;
       mf:result <single-pass/bnode-ref.n3>
     ]
+    [
+      mf:name "Variable in facts does not match the rules";
+      mf:action <single-pass/variable.n3>;
+      mf:result <single-pass/variable-ref.n3>
+    ]
   ).
