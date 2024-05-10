@@ -1,10 +1,10 @@
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 
 from rdflib import BNode, Graph, Literal, URIRef, Variable
 from rdflib.term import Node
 
 from knom.typing import Bindings, Mask, Triple
-from knom.util import LOG, node_repr, print_rule, print_triple
+from knom.util import LOG
 
 
 def bind(vars_: Triple, vals: Triple) -> Bindings | None:
@@ -55,7 +55,7 @@ def mask(triple: Triple, bindings: Bindings) -> Mask:
 def match_head_clause(
     facts: Graph,
     head_first: Triple,
-    head_rest: list[Triple],
+    head_rest: Sequence[Triple],
     bound: set[Triple] | None = None,
     bindings: Bindings | None = None,
 ) -> Iterator[Bindings]:
@@ -82,7 +82,7 @@ def match_head_clause(
 
 def match_head(
     facts: Graph,
-    head: Iterable[Triple],
+    head: Sequence[Triple],
 ) -> Iterator[Bindings]:
     return match_head_clause(facts, head[0], head[1:])
 

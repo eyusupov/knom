@@ -1,5 +1,3 @@
-from typing import T
-
 from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib.collection import Collection
 from rdflib.compare import to_canonical_graph
@@ -9,7 +7,7 @@ from knom import LOG, single_pass
 MF = Namespace("http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#")
 
 
-def pytest_generate_tests(metafunc: T) -> None:
+def pytest_generate_tests(metafunc) -> None:  # noqa: ANN001
     g = Graph().parse(location="tests/n3/single-pass-manifests.n3", format="n3")
     names = []
     parameters = []
