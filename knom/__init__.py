@@ -52,10 +52,9 @@ def mask(triple: Triple, bindings: Bindings) -> Mask:
     )
 
 
-def match_head_clause(
+def match_head(
     facts: Graph,
-    head_first: Triple,
-    head_rest: Sequence[Triple],
+    head: Sequence[Triple],
     bound: set[Triple] | None = None,
     bindings: Bindings | None = None,
 ) -> Iterator[Bindings]:
@@ -63,6 +62,7 @@ def match_head_clause(
         bindings = {}
     if bound is None:
         bound = set()
+    head_first = head[0]
     mask_ = mask(head_first, bindings)
     for fact in facts.triples(mask_):
         if fact in bound:
@@ -74,17 +74,11 @@ def match_head_clause(
             continue
         bindings.update(binding)
         bound.add(fact)
+        head_rest = head[1:]
         if len(head_rest) > 0:
-            yield from match_head_clause(facts, head_rest[0], head_rest[1:], bound, bindings)
+            yield from match_head(facts, head_rest, bound, bindings)
         else:
             yield bindings
-
-
-def match_head(
-    facts: Graph,
-    head: Sequence[Triple],
-) -> Iterator[Bindings]:
-    return match_head_clause(facts, head[0], head[1:])
 
 
 def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
