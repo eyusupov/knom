@@ -32,7 +32,22 @@
     ]
     [
       mf:name "Variable in facts does not match the rules";
-      mf:action <single-pass/variable.n3>;
-      mf:result <single-pass/variable-ref.n3>
+      mf:action <single-pass/variable-in-facts.n3>;
+      mf:result <single-pass/empty.n3>
+    ]
+    [
+      mf:name "Variables from incomplete matches are not used in other matches";
+      mf:action <single-pass/incomplete-match.n3>;
+      mf:result <single-pass/incomplete-match-ref.n3>
+    ]
+    [
+      mf:name "Duplicate clauses can bind to the same fact.";
+      mf:action <single-pass/duplicate-clause-in-head.n3>;
+      mf:result <single-pass/duplicate-clause-in-head-ref.n3>
+    ]
+    [
+      mf:name "Rule with a binding conflict does not match.";
+      mf:action <single-pass/binding-conflict.n3>;
+      mf:result <single-pass/empty.n3>
     ]
   ).

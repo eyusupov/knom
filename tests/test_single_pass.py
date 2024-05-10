@@ -31,6 +31,7 @@ def pytest_generate_tests(metafunc) -> None:  # noqa: ANN001
 def test_single_pass(action: URIRef, result: URIRef) -> None:
     action_graph = Graph().parse(location=action, format="n3")
     result_graph = Graph().parse(location=result, format="n3")
+    # TODO(eyusupov): order rules and facts so that the tests fail determenistically
     rules = Graph(namespace_manager=action_graph.namespace_manager)
     facts = Graph(namespace_manager=action_graph.namespace_manager)
     for s, p, o in action_graph:
