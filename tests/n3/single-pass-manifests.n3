@@ -3,7 +3,7 @@
 @prefix : <#>.
 
 [] a mf:Manifest ;
-  mf:name "single bottom-up inference pass";
+  mf:name "Single bottom-up inference pass";
   mf:entries (
     [
       mf:name "No facts and no rules produce empty result";
@@ -41,13 +41,33 @@
       mf:result <single-pass/incomplete-match-ref.n3>
     ]
     [
-      mf:name "Duplicate clauses can bind to the same fact.";
+      mf:name "Duplicate clauses can bind to the same fact";
       mf:action <single-pass/duplicate-clause-in-head.n3>;
       mf:result <single-pass/duplicate-clause-in-head-ref.n3>
     ]
     [
-      mf:name "Rule with a binding conflict does not match.";
+      mf:name "Rule with a binding conflict does not match";
       mf:action <single-pass/binding-conflict.n3>;
       mf:result <single-pass/empty.n3>
+    ]
+    [
+      mf:name "Multiple rules each produce results";
+      mf:action <single-pass/multiple-rules.n3>;
+      mf:result <single-pass/multiple-rules-ref.n3>
+    ]
+    [
+      mf:name "Rules with blank nodes produce correct results";
+      mf:action <single-pass/bnodes.n3>;
+      mf:result <single-pass/bnodes-ref.n3>;
+    ]
+    [
+      mf:name "Rules with several matches and unbound blank nodes in conclustion produce correct results";
+      mf:action <single-pass/several-matches-unbound-bnode.n3>;
+      mf:result <single-pass/several-matches-unbound-bnode-ref.n3>;
+    ]
+    [
+      mf:name "Rules with several matches and unbound vars in conclustion produce correct results";
+      mf:action <single-pass/several-matches-unbound-var.n3>;
+      mf:result <single-pass/several-matches-unbound-var-ref.n3>;
     ]
   ).
