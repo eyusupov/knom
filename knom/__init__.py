@@ -11,21 +11,17 @@ import json
 def bind_node(
     head_node: Node, fact_node: Node, bindings: Bindings
 ) -> Iterator[Bindings]:
-    print("bind node: ", head_node.n3(), "->", fact_node.n3(), json.dumps(bindings))
     if isinstance(fact_node, Variable):
         return
     elif isinstance(head_node, URIRef | Literal):
         if head_node != fact_node:
-            print("conflict")
             return
         yield bindings
     elif isinstance(head_node, BNode | Variable):
         if bindings.get(head_node, fact_node) != fact_node:
-            print("conflict")
             return
         new_bindings = bindings.copy()
         new_bindings[head_node] = fact_node
-        print("bound")
         yield new_bindings
     elif isinstance(head_node, Graph):
         if not isinstance(fact_node, Graph):
@@ -39,7 +35,6 @@ def bind_node(
 def bind(
     head_clause: Triple, fact: Triple, bindings: Bindings
 ) -> Iterator[Bindings | None]:
-    print("binding triple", head_clause, json.dumps(bindings))
     s, p, o = head_clause
     for s_binding in bind_node(s, fact[0], bindings):
         for p_binding in bind_node(p, fact[1], s_binding):
@@ -100,14 +95,18 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
     for head, implies, body in rules:
         assert isinstance(head, Graph)
         assert implies == LOG.implies
-        assert isinstance(body, Graph)
         for bindings in match_rule(list(head), facts, {}):
             if bindings is None:
-                print("there was a conflict, not producing")
                 continue
-            for triple in body:
-                print("producing triple from", triple, json.dumps(bindings))
-                yield assign(triple, bindings)
+            if isinstance(body, Variable):
+                g = bindings[body]
+                assert isinstance(g, Graph)
+                for triple in g:
+                    yield triple
+            else:
+                assert isinstance(body, Graph)
+                for triple in body:
+                    yield assign(triple, bindings)
 
 
 def naive_fixpoint(facts: Graph, rules: Graph) -> Graph:
