@@ -9,8 +9,7 @@ Dependencies = set[tuple[Triple, Triple]]
 
 
 def matches(triple1: Triple, triple2: Triple) -> bool:
-    return bind(triple1, triple2) is not None or bind(triple2, triple1) is not None
-
+    return bind(triple1, triple2, {}) is not None or bind(triple2, triple1, {}) is not None
 
 
 def calculate_clause_dependencies(

@@ -1,6 +1,6 @@
 @prefix : <http://example.com/>.
 
-:steve :says { :a :b { :c :d :e } }.
+:steve :says { :a :b { :c :d :e } }, { :a :b { :d :e :f } }.
 
 {
   :steve :says { ?a :b { :c ?d ?e } }.

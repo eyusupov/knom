@@ -1,4 +1,5 @@
 from collections.abc import Iterable, Iterator, Sequence
+from typing import cast
 
 from rdflib import BNode, Graph, Literal, URIRef, Variable
 from rdflib.term import Node
@@ -7,108 +8,91 @@ from knom.typing import Bindings, Mask, Triple
 from knom.util import LOG
 
 
-def bind_graph(var: Graph, val: Node) -> Bindings | None:
-    if not isinstance(val, Graph) or len(var) != len(val):
-        return None
-    bindings: Bindings = {}
-    for vars_, vals in zip(var, val, strict=True):
-        binding = bind(vars_, vals)
-        if binding is None:
-            return None
-        bindings.update(binding)
-    return bindings
+def bind_node(head_node: Node, fact_node: Node, bindings: Bindings) -> Iterator[Bindings | None]:
+    if isinstance(fact_node, Variable):
+        return # TODO: this is what eye does. should we?
+    if isinstance(head_node, URIRef | Literal):
+        if head_node != fact_node:
+            yield None
+    elif isinstance(head_node, BNode | Variable):
+        if bindings.get(head_node, fact_node) != fact_node:
+            return
+        new_bindings = bindings.copy()
+        new_bindings[head_node] = fact_node
+        yield new_bindings
+    elif isinstance(head_node, Graph):
+        if not isinstance(fact_node, Graph):
+            return
+        yield from match(list(head_node), fact_node, bindings)
+    else:
+        raise TypeError
 
 
-def bind(vars_: Triple, vals: Triple) -> Bindings | None:
-    bindings: Bindings = {}
-    for var, val in zip(vars_, vals, strict=True):
-        if isinstance(var, BNode | Variable):
-            if bindings.get(var, val) != val:
-                # A variable is already bound to a different value
-                return None
-            bindings[var] = val
-        elif isinstance(var, URIRef | Literal):
-            if var != val:
-                return None
-        elif isinstance(var, Graph):
-            graph_bindings = bind_graph(var, val)
-            if graph_bindings is None:
-                return None
-            bindings.update(graph_bindings)
-        else:
-            raise TypeError
-    return bindings
+def bind(head_clause: Triple, fact: Triple, bindings: Bindings) -> Iterator[Bindings | None]:
+    for var, val in zip(head_clause, fact, strict=True):
+        yield from bind_node(var, val, bindings)
 
 
-def get_node_binding(var: Node, bindings: Bindings) -> Node:
-    if isinstance(var, Variable | BNode):
-        return bindings.get(var, BNode())
-    return var
+def assign_node(node: Node, bindings: Bindings) -> Node:
+    if isinstance(node, Variable | BNode):
+        return bindings.get(node, BNode())
+    if isinstance(node, Graph):
+        g = Graph()
+        for triple in node:
+            g.add(assign(triple, bindings))
+        return g
+    return node
 
 
 def assign(triple: Triple, bindings: Bindings) -> Triple:
     return (
-        get_node_binding(triple[0], bindings),
-        get_node_binding(triple[1], bindings),
-        get_node_binding(triple[2], bindings),
+        assign_node(triple[0], bindings),
+        assign_node(triple[1], bindings),
+        assign_node(triple[2], bindings),
     )
 
 
-def get_node_mask(x: Node, bindings: Bindings) -> Node | None:
-    if isinstance(x, Variable | BNode):
-        return bindings.get(x, None)
-    if isinstance(x, Graph):
-        return None
-    assert isinstance(x, URIRef | Literal)
-    return x
+def get_node_mask(node: Node, bindings: Bindings) -> Node | None:
+    if isinstance(node, Variable | BNode):
+        return bindings.get(node, None)
+    assert isinstance(node, URIRef | Literal | Graph)
+    return node
 
 
-def mask(triple: Triple, bindings: Bindings) -> Mask:
+def mask(head_clause: Triple, bindings: Bindings) -> Mask:
     return (
-        get_node_mask(triple[0], bindings),
-        get_node_mask(triple[1], bindings),
-        get_node_mask(triple[2], bindings),
+        get_node_mask(head_clause[0], bindings),
+        get_node_mask(head_clause[1], bindings),
+        get_node_mask(head_clause[2], bindings),
     )
 
 
-def match_head(
-    facts: Graph,
+def match(
     head: Sequence[Triple],
-    bindings: Bindings | None = None,
+    facts: Graph,
+    bindings: Bindings
 ) -> Iterator[Bindings]:
-    if bindings is None:
-        bindings = {}
-    head_first = head[0]
-    mask_ = mask(head_first, bindings)
-    for fact in facts.triples(mask_):
-        new_bindings = bindings.copy()
-        binding = bind(head_first, fact)
-        if binding is None or any(
-            isinstance(val, Variable) for val in binding.values()
-        ):
-            continue
-        new_bindings.update(binding)
-        head_rest = head[1:]
-        if len(head_rest) > 0:
-            yield from match_head(facts, head_rest, new_bindings)
-        else:
-            yield new_bindings
+    for head_clause in head:
+        mask_ = mask(head_clause, bindings)
+        for fact in facts.triples(mask_):
+            new_bindings : Bindings | None = bindings.copy()
+            for new_binding in bind(head_clause, fact, cast(Bindings, new_bindings)):
+                if new_binding is None:
+                    new_bindings = None
+                    break
+                cast(Bindings, new_bindings).update(new_binding)
+            if new_bindings is not None:
+                yield new_bindings
 
 
 def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
     for head, implies, body in rules:
         assert isinstance(head, Graph)
         assert implies == LOG.implies
-        for binding in match_head(facts, list(head)):
-            if isinstance(body, Graph):
-                for body_clause in body:
-                    new_triple = assign(body_clause, binding)
-                    yield new_triple
-            else:
-                assert isinstance(body, Variable)
-                g = binding[body]
-                if isinstance(g, Graph):
-                    yield from g
+        assert isinstance(body, Graph)
+        for bindings in match(list(head), facts, {}):
+            for triple in body:
+                yield assign(triple, bindings)
 
 
 def naive_fixpoint(facts: Graph, rules: Graph) -> Graph:
