@@ -10,26 +10,28 @@ from knom.util import LOG
 import json
 def bind_node(
     head_node: Node, fact_node: Node, bindings: Bindings
-) -> Iterator[Bindings | None]:
+) -> Iterator[Bindings]:
     print("bind node: ", head_node.n3(), "->", fact_node.n3(), json.dumps(bindings))
     if isinstance(fact_node, Variable):
-        yield None # This is what eye does. should we?
+        return
     elif isinstance(head_node, URIRef | Literal):
         if head_node != fact_node:
             print("conflict")
-            yield None
+            return
         yield bindings
     elif isinstance(head_node, BNode | Variable):
         if bindings.get(head_node, fact_node) != fact_node:
             print("conflict")
-            yield None
-        bindings[head_node] = fact_node
+            return
+        new_bindings = bindings.copy()
+        new_bindings[head_node] = fact_node
         print("bound")
-        yield bindings
+        yield new_bindings
     elif isinstance(head_node, Graph):
         if not isinstance(fact_node, Graph):
-            yield None
-        yield from match_rule(list(head_node), cast(Graph, fact_node), bindings)
+            return
+        new_bindings = bindings.copy()
+        yield from match_rule(list(head_node), cast(Graph, fact_node), new_bindings)
     else:
         raise TypeError
 
@@ -38,19 +40,16 @@ def bind(
     head_clause: Triple, fact: Triple, bindings: Bindings
 ) -> Iterator[Bindings | None]:
     print("binding triple", head_clause, json.dumps(bindings))
-    for var, val in zip(head_clause, fact, strict=True):
-        for new_bindings in bind_node(var, val, bindings):
-            if new_bindings is None:
-                yield None
-                return
-                bindings.update(bindings)
-    yield bindings
+    s, p, o = head_clause
+    for s_binding in bind_node(s, fact[0], bindings):
+        for p_binding in bind_node(p, fact[1], s_binding):
+            yield from bind_node(o, fact[2], p_binding)
 
 
 def mask_node(node: Node, bindings: Bindings) -> Node | None:
-    if isinstance(node, Variable | BNode):
+    if isinstance(node, Variable | BNode | Graph):
         return bindings.get(node, None)
-    assert isinstance(node, URIRef | Literal | Graph)
+    assert isinstance(node, URIRef | Literal)
     return node
 
 
@@ -74,7 +73,7 @@ def match_rule(
             new_bindings = bindings.copy()
             for binding in bind(head_clause, fact, new_bindings):
                 if binding is not None:
-                    yield from match_rule(head[1:], facts, new_bindings)
+                    yield from match_rule(head[1:], facts, binding)
 
 
 
