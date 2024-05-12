@@ -105,4 +105,9 @@
       mf:action <scoping/graph-term-nested-var.n3>;
       mf:result <scoping/graph-term-nested-var-ref.n3>;
     ]
+    [
+      mf:name "All clauses in the graph term must match";
+      mf:action <scoping/graph-term-all-clauses-match.n3>;
+      mf:result <scoping/graph-term-all-clauses-match-ref.n3>;
+    ]
   ).
