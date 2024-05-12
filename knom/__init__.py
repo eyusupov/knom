@@ -24,7 +24,7 @@ def bind(vars_: Triple, vals: Triple) -> Bindings | None:
 
 
 def get_node_binding(var: Node, bindings: Bindings) -> Node:
-    if isinstance(var, Variable):
+    if isinstance(var, Variable | BNode):
         return bindings.get(var, BNode())
     return var
 
