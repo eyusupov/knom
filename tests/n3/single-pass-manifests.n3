@@ -85,4 +85,9 @@
       mf:action <single-pass/several-matches-unbound-var.n3>;
       mf:result <single-pass/several-matches-unbound-var-ref.n3>;
     ]
+    [
+      mf:name "Rules with quoted statements produce quoted statements";
+      mf:action <scoping/unquoting.n3>;
+      mf:result <scoping/unquoting-ref.n3>;
+    ]
   ).
