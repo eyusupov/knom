@@ -1,6 +1,6 @@
 from knom import bind
 
-from . import EX, bn_a, bn_b, bn_c, lit_a, lit_b, lit_c, var_a, var_b, var_c
+from . import EX, bn_a, bn_b, bn_c, lit_a, lit_b, lit_c, lit_graph, var_a, var_b, var_c
 
 
 def test_bind_var_to_bns() -> None:
@@ -102,3 +102,8 @@ def test_bind_uriref_to_urifef() -> None:
 def test_bind_uriref_to_different_urifef() -> None:
     bindings = bind((EX.a, EX.b, EX.c), (EX.a, EX.b, EX.d))
     assert bindings is None
+
+
+def test_bind_graph_to_var() -> None:
+    bindings = bind((var_a, lit_b, lit_c), (lit_graph, lit_b, lit_c))
+    assert bindings == {var_a: lit_graph}

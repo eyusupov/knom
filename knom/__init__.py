@@ -7,6 +7,18 @@ from knom.typing import Bindings, Mask, Triple
 from knom.util import LOG
 
 
+def bind_graph(var: Graph, val: Node) -> Bindings | None:
+    if not isinstance(val, Graph) or len(var) != len(val):
+        return None
+    bindings: Bindings = {}
+    for vars_, vals in zip(var, val, strict=True):
+        binding = bind(vars_, vals)
+        if binding is None:
+            return None
+        bindings.update(binding)
+    return bindings
+
+
 def bind(vars_: Triple, vals: Triple) -> Bindings | None:
     bindings: Bindings = {}
     for var, val in zip(vars_, vals, strict=True):
@@ -18,6 +30,11 @@ def bind(vars_: Triple, vals: Triple) -> Bindings | None:
         elif isinstance(var, URIRef | Literal):
             if var != val:
                 return None
+        elif isinstance(var, Graph):
+            graph_bindings = bind_graph(var, val)
+            if graph_bindings is None:
+                return None
+            bindings.update(graph_bindings)
         else:
             raise TypeError
     return bindings
@@ -40,6 +57,8 @@ def assign(triple: Triple, bindings: Bindings) -> Triple:
 def get_node_mask(x: Node, bindings: Bindings) -> Node | None:
     if isinstance(x, Variable | BNode):
         return bindings.get(x, None)
+    if isinstance(x, Graph):
+        return None
     assert isinstance(x, URIRef | Literal)
     return x
 
@@ -80,11 +99,16 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
     for head, implies, body in rules:
         assert isinstance(head, Graph)
         assert implies == LOG.implies
-        assert isinstance(body, Graph)
         for binding in match_head(facts, list(head)):
-            for body_clause in body:
-                new_tuple = assign(body_clause, binding)
-                yield new_tuple
+            if isinstance(body, Graph):
+                for body_clause in body:
+                    new_triple = assign(body_clause, binding)
+                    yield new_triple
+            else:
+                assert isinstance(body, Variable)
+                g = binding[body]
+                if isinstance(g, Graph):
+                    yield from g
 
 
 def naive_fixpoint(facts: Graph, rules: Graph) -> Graph:

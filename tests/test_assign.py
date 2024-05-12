@@ -2,7 +2,7 @@ from rdflib import BNode
 
 from knom import assign
 
-from . import EX, bn_a, bn_b, bn_c, lit_b, lit_c, var_a, var_b, var_c
+from . import EX, bn_a, bn_b, bn_c, lit_b, lit_c, lit_graph, var_a, var_b, var_c
 
 
 def test_assign() -> None:
@@ -63,3 +63,27 @@ def test_assign_bnode_bound_to_bnode() -> None:
         },
     )
     assert triple == (bn_a, lit_b, bn_b)
+
+
+def test_assign_var_bound_to_graph() -> None:
+    triple = assign(
+        (var_a, var_b, bn_c),
+        {
+            var_a: lit_graph,
+            var_b: lit_b,
+            bn_c: bn_b
+        },
+    )
+    assert triple == (lit_graph, lit_b, bn_b)
+
+
+def test_assign_bnode_bound_to_graph() -> None:
+    triple = assign(
+        (bn_a, var_b, bn_c),
+        {
+            bn_a: lit_graph,
+            var_b: lit_b,
+            bn_c: bn_b
+        },
+    )
+    assert triple == (lit_graph, lit_b, bn_b)
