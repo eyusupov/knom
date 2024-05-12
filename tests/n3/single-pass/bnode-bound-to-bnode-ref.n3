@@ -1,0 +1,3 @@
+@prefix : <http://example.com/#>.
+
+:c :b _:d.

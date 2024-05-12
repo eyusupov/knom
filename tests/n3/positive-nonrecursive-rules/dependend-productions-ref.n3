@@ -1,0 +1,43 @@
+@prefix : <http://example.com/>.
+
+# a b c =>
+:d :e :f.
+:b :b :b.
+:a :q :q.
+:b :e :e.
+:c :f :f.
+
+# d e f =>
+:e :e :e.
+:d :q :q.
+:e :f :f.
+
+# b b b =>
+:b :q :q.
+:b :f :f.
+
+# a q q =>
+:q :q :q.
+:q :e :e.
+:q :f :f.
+
+# b e e =>
+# c f f =>
+:f :f :f.
+:c :q :q.
+:f :e :e.
+# e e e =>
+:e :q :q.
+# d q q =>
+# e f f =>
+# b q q =>
+# b f f =>
+# q q q =>
+# q e e =>
+# q f f =>
+# f f f =>
+:f :q :q.
+# c q q =>
+# f e e =>
+# e q q =>
+# d d d =>

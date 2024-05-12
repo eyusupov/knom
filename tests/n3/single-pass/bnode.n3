@@ -1,0 +1,8 @@
+@prefix : <http://example.com/>.
+
+[] :a :b.
+_:c :d :e.
+:e :d _:c.
+
+{ ?a :a :b } => { ?a :x :x }.
+{ ?d :d ?e } => { ?d :y ?e }.

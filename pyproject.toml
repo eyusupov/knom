@@ -1,2 +1,35 @@
-[tool.nitpick]
-style = "https://raw.githubusercontent.com/wemake-services/wemake-python-styleguide/master/styles/nitpick-style.toml"
+[project]
+name = "knom"
+requires-python = ">=3.10"
+version = "0.0.1"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  "ignore:pkg_resources is deprecated as an API.:DeprecationWarning", # RDFlib
+  "ignore:Deprecated call to `pkg_resources.declare_namespace:DeprecationWarning" # RDFlib
+]
+
+[tool.flake8]
+per-file-ignores = "tests: S101"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  # ignore asserts warnings
+  "S101",
+  "B011",
+  # ignore docstrings. TODO: remove and document
+  "D100",
+  "D103",
+  "D104",
+  # fix ruff warnings
+  "D211", # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible.
+  "D213", # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible.
+  # conflict with ruff formatter, recommended to disable
+  "COM812",
+  "ISC001"
+]
+
+[[tool.mypy.overrides]]
+module = ["pygraphviz", "pytest"]
+ignore_missing_imports = true

@@ -1,0 +1,10 @@
+@prefix : <http://example.com/>.
+
+# TODO: find out why this is correct and if
+# :a :x _:b.
+# :a :x _:b.
+# :a :x _:b.
+# is also correct
+:a :x _:a.
+:b :x _:b.
+:c :x _:c.

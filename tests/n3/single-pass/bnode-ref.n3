@@ -1,0 +1,5 @@
+@prefix : <http://example.com/>.
+
+[] :x :x.
+_:c :y :e.
+:e :y _:c.

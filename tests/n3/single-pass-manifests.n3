@@ -1,0 +1,88 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <#>.
+
+[] a mf:Manifest ;
+  mf:name "Single bottom-up inference pass";
+  mf:entries (
+    [
+      mf:name "No facts and no rules produce empty result";
+      mf:action <single-pass/empty.n3>;
+      mf:result <single-pass/empty.n3>
+    ]
+    [
+      mf:name "Simple rule matching a fact";
+      mf:action <single-pass/simple-match.n3>;
+      mf:result <single-pass/simple-match-ref.n3>
+    ]
+    [
+      mf:name "Unbound variable in conclusion produces a bnode";
+      mf:action <single-pass/unbound-variable-in-conclusion.n3>;
+      mf:result <single-pass/unbound-variable-in-conclusion-ref.n3>
+    ]
+    [
+      mf:name "Multiple clauses must all match";
+      mf:action <single-pass/multi-clause.n3>;
+      mf:result <single-pass/multi-clause-ref.n3>
+    ]
+    [
+      mf:name "Blank nodes must mantain their relationships with other nodes";
+      mf:action <single-pass/bnode.n3>;
+      mf:result <single-pass/bnode-ref.n3>
+    ]
+    [
+      mf:name "Variable in facts does not match the rules";
+      mf:action <single-pass/variable-in-facts.n3>;
+      mf:result <single-pass/empty.n3>
+    ]
+    [
+      mf:name "Variables from incomplete matches are not used in other matches";
+      mf:action <single-pass/incomplete-match.n3>;
+      mf:result <single-pass/incomplete-match-ref.n3>
+    ]
+    [
+      mf:name "Var bound to blank node produces that blank node";
+      mf:action <single-pass/var-bound-to-bnode.n3>;
+      mf:result <single-pass/var-bound-to-bnode-ref.n3>
+    ]
+    [
+      mf:name "Blank node bound to blank node produces that blank node";
+      mf:action <single-pass/bnode-bound-to-bnode.n3>;
+      mf:result <single-pass/bnode-bound-to-bnode-ref.n3>
+    ]
+    [
+      mf:name "Blank node bound to uriref produces that uriref";
+      mf:action <single-pass/bnode-bound-to-uriref.n3>;
+      mf:result <single-pass/bnode-bound-to-uriref-ref.n3>
+    ]
+    [
+      mf:name "Duplicate clauses can bind to the same fact";
+      mf:action <single-pass/duplicate-clause-in-head.n3>;
+      mf:result <single-pass/duplicate-clause-in-head-ref.n3>
+    ]
+    [
+      mf:name "Rule with a binding conflict does not match";
+      mf:action <single-pass/binding-conflict.n3>;
+      mf:result <single-pass/empty.n3>
+    ]
+    [
+      mf:name "Multiple rules each produce results";
+      mf:action <single-pass/multiple-rules.n3>;
+      mf:result <single-pass/multiple-rules-ref.n3>
+    ]
+    [
+      mf:name "Rules with blank nodes produce correct results";
+      mf:action <single-pass/bnodes.n3>;
+      mf:result <single-pass/bnodes-ref.n3>;
+    ]
+    [
+      mf:name "Rules with several matches and unbound blank nodes in conclustion produce correct results";
+      mf:action <single-pass/several-matches-unbound-bnode.n3>;
+      mf:result <single-pass/several-matches-unbound-bnode-ref.n3>;
+    ]
+    [
+      mf:name "Rules with several matches and unbound vars in conclustion produce correct results";
+      mf:action <single-pass/several-matches-unbound-var.n3>;
+      mf:result <single-pass/several-matches-unbound-var-ref.n3>;
+    ]
+  ).
