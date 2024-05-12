@@ -41,6 +41,21 @@
       mf:result <single-pass/incomplete-match-ref.n3>
     ]
     [
+      mf:name "Var bound to blank node produces that blank node";
+      mf:action <single-pass/var-bound-to-bnode.n3>;
+      mf:result <single-pass/var-bound-to-bnode-ref.n3>
+    ]
+    [
+      mf:name "Blank node bound to blank node produces that blank node";
+      mf:action <single-pass/bnode-bound-to-bnode.n3>;
+      mf:result <single-pass/bnode-bound-to-bnode-ref.n3>
+    ]
+    [
+      mf:name "Blank node bound to uriref produces that uriref";
+      mf:action <single-pass/bnode-bound-to-uriref.n3>;
+      mf:result <single-pass/bnode-bound-to-uriref-ref.n3>
+    ]
+    [
       mf:name "Duplicate clauses can bind to the same fact";
       mf:action <single-pass/duplicate-clause-in-head.n3>;
       mf:result <single-pass/duplicate-clause-in-head-ref.n3>

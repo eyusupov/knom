@@ -1,4 +1,5 @@
 from rdflib import Graph, URIRef
+from rdflib.graph import ConjunctiveGraph
 
 from knom import single_pass
 
@@ -12,7 +13,7 @@ def pytest_generate_tests(metafunc) -> None:  # noqa: ANN001
 
 
 def test_single_pass(action: URIRef, result: URIRef) -> None:
-    action_graph = Graph().parse(location=action, format="n3")
+    action_graph = ConjunctiveGraph().parse(location=action, format="n3")
     rules, facts = split_rules_and_facts(action_graph)
     id_ = URIRef("http://example.com/#")
     output = Graph(identifier=id_)
