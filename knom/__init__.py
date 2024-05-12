@@ -7,7 +7,7 @@ from rdflib.term import Node
 from knom.typing import Bindings, Mask, Triple
 from knom.util import LOG
 
-import json
+
 def bind_node(
     head_node: Node, fact_node: Node, bindings: Bindings
 ) -> Iterator[Bindings]:
@@ -34,7 +34,7 @@ def bind_node(
 
 def bind(
     head_clause: Triple, fact: Triple, bindings: Bindings
-) -> Iterator[Bindings | None]:
+) -> Iterator[Bindings]:
     s, p, o = head_clause
     for s_binding in bind_node(s, fact[0], bindings):
         for p_binding in bind_node(p, fact[1], s_binding):
@@ -42,7 +42,9 @@ def bind(
 
 
 def mask_node(node: Node, bindings: Bindings) -> Node | None:
-    if isinstance(node, Variable | BNode | Graph):
+    if isinstance(node, Graph):
+        return None
+    if isinstance(node, Variable | BNode):
         return bindings.get(node, None)
     assert isinstance(node, URIRef | Literal)
     return node
@@ -67,8 +69,7 @@ def match_rule(
         for fact in facts.triples(mask_):
             new_bindings = bindings.copy()
             for binding in bind(head_clause, fact, new_bindings):
-                if binding is not None:
-                    yield from match_rule(head[1:], facts, binding)
+                yield from match_rule(head[1:], facts, binding)
 
 
 
@@ -96,8 +97,6 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
         assert isinstance(head, Graph)
         assert implies == LOG.implies
         for bindings in match_rule(list(head), facts, {}):
-            if bindings is None:
-                continue
             if isinstance(body, Variable):
                 g = bindings[body]
                 assert isinstance(g, Graph)
