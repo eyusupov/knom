@@ -88,7 +88,7 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
 
 
 def naive_fixpoint(facts: Graph, rules: Graph) -> Graph:
-    inferred = Graph()
+    inferred = Graph(namespace_manager=facts.namespace_manager)
     feed = facts
     while True:
         new_feed = Graph()

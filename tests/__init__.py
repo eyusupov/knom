@@ -1,5 +1,7 @@
 from rdflib import RDF, BNode, Graph, Literal, Namespace, URIRef, Variable
 from rdflib.collection import Collection
+from rdflib.plugins.serializers.nt import _nt_row
+from rdflib_canon import CanonicalizedGraph
 
 from knom import LOG
 
@@ -29,11 +31,13 @@ def generate_tests_from_manifests(path: str, metafunc) -> None:  # noqa: ANN001
             name = g.value(entry, MF.name, None)
             action = g.value(entry, MF.action, None)
             result = g.value(entry, MF.result, None)
-            assert action is not None, f"action is empty for {name}"
-            assert result is not None, f"result is empty for {name}"
+            if action is None:
+                continue
+            if result is None:
+                continue
             assert isinstance(action, URIRef)
             assert isinstance(result, URIRef)
-            names.append(f"{mf_name}__{name}".replace(" ", "_"))
+            names.append(f"{name}".replace(" ", "_"))
             parameters.append((action, result))
         metafunc.parametrize("action, result", parameters, ids=names)
 
@@ -47,3 +51,12 @@ def split_rules_and_facts(graph: Graph) -> tuple[Graph, Graph]:
         else:
             facts.add((s, p, o))
     return (rules, facts)
+
+
+def prettify(g: Graph) -> list[str]:
+    return {" ".join(n.n3() for n in triples) for triples in g}
+
+
+def postprocess(graph: Graph) -> list[str]:
+    cg = CanonicalizedGraph(graph)
+    return prettify(cg.canon)

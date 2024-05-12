@@ -1,7 +1,7 @@
 from rdflib import BNode, Graph, Literal, Namespace, URIRef, Variable
 from rdflib.term import Node
 
-from knom.typing import Bindings, Mask, MaskElement, Triple
+from knom.typing import Triple
 
 # TODO(eyusupov): remove
 EX = Namespace("http://example.com/")
