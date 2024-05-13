@@ -16,6 +16,7 @@ bn_b = BNode("b")
 bn_c = BNode("c")
 
 lit_triple = (lit_a, lit_b, lit_c)
+lit_triple2 = (lit_b, lit_c, lit_a)
 
 vara_triple = (var_a, lit_b, lit_c)
 varaa_triple = (var_a, var_a, lit_c)
@@ -27,6 +28,7 @@ bnb_triple = (lit_a, bn_b, lit_c)
 bnc_triple = (lit_a, lit_b, bn_c)
 
 lit_graph = Graph().add(lit_triple)
+lit_graph2 = Graph().add(lit_triple2)
 
 vara_graph = Graph().add(vara_triple)
 varaa_graph = Graph().add(varaa_triple)

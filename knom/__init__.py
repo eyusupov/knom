@@ -9,11 +9,17 @@ from knom.util import LOG
 
 
 def bind_node(
-    head_node: Node, fact_node: Node, bindings: Bindings
+    head_node: Node,
+    fact_node: Node,
+    bindings: Bindings | None = None,
+    *,
+    match_to_var: bool = False,
 ) -> Iterator[Bindings]:
-    if isinstance(fact_node, Variable):
-        return  # This is open to interpretation
-    elif isinstance(head_node, URIRef | Literal):
+    if bindings is None:
+        bindings = {}
+    if isinstance(fact_node, Variable) and not match_to_var:
+        return
+    if isinstance(head_node, URIRef | Literal):
         if head_node != fact_node:
             return
         yield bindings
@@ -33,12 +39,18 @@ def bind_node(
 
 
 def bind(
-    head_clause: Triple, fact: Triple, bindings: Bindings
+    head_clause: Triple,
+    fact: Triple,
+    bindings: Bindings | None = None,
+    *,
+    match_to_var: bool = False,
 ) -> Iterator[Bindings]:
+    if bindings is None:
+        bindings = {}
     s, p, o = head_clause
-    for s_binding in bind_node(s, fact[0], bindings):
-        for p_binding in bind_node(p, fact[1], s_binding):
-            yield from bind_node(o, fact[2], p_binding)
+    for s_binding in bind_node(s, fact[0], bindings, match_to_var=match_to_var):
+        for p_binding in bind_node(p, fact[1], s_binding, match_to_var=match_to_var):
+            yield from bind_node(o, fact[2], p_binding, match_to_var=match_to_var)
 
 
 def mask_node(node: Node, bindings: Bindings) -> Node | None:
@@ -70,7 +82,6 @@ def match_rule(
             new_bindings = bindings.copy()
             for binding in bind(head_clause, fact, new_bindings):
                 yield from match_rule(head[1:], facts, binding)
-
 
 
 def assign_node(node: Node, bindings: Bindings) -> Node:

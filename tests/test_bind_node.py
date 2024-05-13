@@ -18,7 +18,7 @@ from . import (
 
 
 def test_bind_node_var_to_bn() -> None:
-    bindings = list(bind_node(var_a, bn_a, {}))
+    bindings = list(bind_node(var_a, bn_a))
     assert bindings == [{var_a: bn_a}]
 
 
@@ -33,7 +33,7 @@ def test_bind_node_var_to_different_bn() -> None:
 
 
 def test_bind_node_var_to_lit() -> None:
-    bindings = list(bind_node(var_a, lit_a, {}))
+    bindings = list(bind_node(var_a, lit_a))
     assert bindings == [{var_a: lit_a}]
 
 
@@ -48,7 +48,7 @@ def test_bind_node_var_to_different_lit() -> None:
 
 
 def test_bind_node_var_to_uriref() -> None:
-    bindings = list(bind_node(var_b, EX.b, {}))
+    bindings = list(bind_node(var_b, EX.b))
     assert bindings == [{var_b: EX.b}]
 
 
@@ -63,22 +63,22 @@ def test_bind_node_var_to_different_uriref() -> None:
 
 
 def test_bind_node_var_to_var() -> None:
-    bindings = list(bind_node(var_a, var_b, {}))
+    bindings = list(bind_node(var_a, var_b))
     assert bindings == []
 
 
 def test_bind_node_lit_to_same_lit() -> None:
-    bindings = list(bind_node(lit_a, lit_a, {}))
+    bindings = list(bind_node(lit_a, lit_a))
     assert bindings == [{}]
 
 
 def test_bind_node_lit_to_different_lit() -> None:
-    bindings = list(bind_node(lit_b, lit_a, {}))
+    bindings = list(bind_node(lit_b, lit_a))
     assert bindings == []
 
 
 def test_bind_node_bn_to_lit() -> None:
-    bindings = list(bind_node(bn_a, lit_a, {}))
+    bindings = list(bind_node(bn_a, lit_a))
     assert bindings == [{bn_a: lit_a}]
 
 
@@ -93,22 +93,22 @@ def test_bind_node_bn_to_different_lits() -> None:
 
 
 def test_bind_node_bn_to_var() -> None:
-    bindings = list(bind_node(bn_a, var_b, {}))
+    bindings = list(bind_node(bn_a, var_b))
     assert bindings == []
 
 
 def test_bind_node_uriref_to_urifef() -> None:
-    bindings = list(bind_node(EX.a, EX.a, {}))
+    bindings = list(bind_node(EX.a, EX.a))
     assert bindings == [{}]
 
 
 def test_bind_node_uriref_to_different_urifef() -> None:
-    bindings = list(bind_node(EX.a, EX.b, {}))
+    bindings = list(bind_node(EX.a, EX.b))
     assert bindings == []
 
 
 def test_bind_node_graph_to_var() -> None:
-    bindings = list(bind_node(var_a, lit_graph, {}))
+    bindings = list(bind_node(var_a, lit_graph))
     assert bindings == [{var_a: lit_graph}]
 
 
@@ -123,7 +123,7 @@ def test_bind_node_graph_to_var_conflict() -> None:
 
 
 def test_bind_node_var_graph_to_graph() -> None:
-    bindings = list(bind_node(vara_graph, lit_graph, {}))
+    bindings = list(bind_node(vara_graph, lit_graph))
     assert bindings == [{var_a: lit_a}]
 
 
@@ -133,7 +133,7 @@ def test_bind_node_var_graph_to_graph_conflict() -> None:
 
 
 def test_bind_node_bn_graph_to_graph() -> None:
-    bindings = list(bind_node(bna_graph, lit_graph, {}))
+    bindings = list(bind_node(bna_graph, lit_graph))
     assert bindings == [{bn_a: lit_a}]
 
 
