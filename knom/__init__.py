@@ -12,7 +12,7 @@ def bind_node(
     head_node: Node, fact_node: Node, bindings: Bindings
 ) -> Iterator[Bindings]:
     if isinstance(fact_node, Variable):
-        return
+        return  # This is open to interpretation
     elif isinstance(head_node, URIRef | Literal):
         if head_node != fact_node:
             return
