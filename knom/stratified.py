@@ -38,37 +38,45 @@ def triggering_rules(rule_with_head: Rule, rules_with_body: Graph) -> Iterable[R
     return {rule for rule in filter_rules(rules_with_body) if clauses_depend(rule_with_head[0], rule[2])}
 
 
-def stratify_rule(rule: Rule, rules: Graph, stratas: Stratas, visited: set[Rule], level=0) -> None:
-    print("rule", print_rule(rule))
-    for trigger_rule in triggering_rules(rule, rules):
-        print("triggering rule", print_rule(rule))
-        if trigger_rule not in visited:
-            print("trigger not visited yet, visiting")
-            visited.add(trigger_rule)
-            stratify_rule(trigger_rule, rules, stratas, visited, level+1)
-        else:
-            print("trigger visited")
+def last_strata(stratas: Stratas) -> int:
+    if stratas:
+        return max(stratas.values()) + 1
+    return 0
 
-        if trigger_rule not in stratas:
-            print("trigger not in strata, assigning 0")
-            stratas[trigger_rule] = 0
 
-        stratas[rule] = stratas[trigger_rule]
-        if rule not in visited:
-            print("this rule is not part of cycle, increasing strata")
-            stratas[rule] += 1
-        print("set rule strata to", stratas[rule])
+def stratify_rule(rule: Rule, rules: Graph, stratas: Stratas, visited: set[Rule], stratified: list[Rule], level=0) -> None:
+    print(level, "stratify rule", print_rule(rule))
+    if rule not in visited:
+        visited.add(rule)
+        for trigger_rule in dependent_rules(rule, rules):
+            print(level, "processing neighbor", print_rule(trigger_rule))
+            stratify_rule(trigger_rule, rules, stratas, visited, stratified, level+1)
+        stratified.insert(0, rule)
+
+def assign_strata(rule: Rule, rules: Graph, stratas: Stratas, counter: int, level: int = 0) -> None:
     if rule not in stratas:
-        print("rule not in strata, assigning 0")
-        stratas[rule] = 0
+        print(level, "assign strata", print_rule(rule), counter)
+        stratas[rule] = counter
+        for trigger in triggering_rules(rule, rules):
+            print(level, "processing neighbor", print_rule(rule), counter)
+            assign_strata(trigger, rules, stratas, counter, level+1)
+
 
 
 def stratify_rules(rules: Graph) -> Iterable[Graph]:
+    print("!!! stratifying")
     stratas: Stratas = {}
     visited: set[Rule] = set()
+    stratified: list[Rule] = []
 
     for rule in filter_rules(rules):
-        stratify_rule(rule, rules, stratas, visited)
+        stratify_rule(rule, rules, stratas, visited, stratified)
+
+    counter = 0
+    for rule in stratified:
+        if rule not in stratas:
+            counter += 1
+            assign_strata(rule, rules, stratas, counter)
 
     prev = -1
     stratified_rules = []

@@ -7,8 +7,3 @@
 { :c ?b :q } => { ?b :d :w }. # rule3
 { :c ?b :w } => { ?b :d :q }. # rule3
 { ?b ?d :q } => { :z :z :z }. # rule4
-
-#   rule1 (0) -> rule2 (0)
-#   rule2 = 1
-#  
-

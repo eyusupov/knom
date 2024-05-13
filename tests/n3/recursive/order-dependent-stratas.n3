@@ -1,0 +1,8 @@
+@prefix : <http://example.com/>.
+
+:Result :stratas (
+  {
+    { ?a ?a ?b. :a :a :b } => { _:e _:e _:e }.
+    { ?b ?b ?c. :b :b :c } => { _:e _:f _:f }.
+  }
+).
