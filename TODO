@@ -1,0 +1,15 @@
+# Engine
+ - Negation
+ - Add top-down inference when there is a question or a query.
+ - Quoting? Is it log:ForallIn?
+   ?head => { :steven :says ?head }
+ - List length builtin
+ - Recursive with guards? Allow fixpoint semantics for some stratas?
+
+# Langserver integration
+  - Since we have our own parser, we can do commands like rename variable that affect
+     all inference graphs by using the AST, without renunning the inference. Basically per-character updates.
+  - By keeping provenance of the inferred facts, we can delete rules and facts without restarting inference from scratch.
+  - We can add rules and facts on the fly and rerun only affected parts based on the stratification algorithm
+  - Real-time inference output
+  - We can use reason ontology for all of this

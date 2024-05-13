@@ -13,11 +13,11 @@ def bind_node(
     fact_node: Node,
     bindings: Bindings | None = None,
     *,
-    match_to_var: bool = False,
+    match_mode: bool = False,
 ) -> Iterator[Bindings]:
     if bindings is None:
         bindings = {}
-    if isinstance(fact_node, Variable) and not match_to_var:
+    if isinstance(fact_node, Variable) and not match_mode:
         return
     if isinstance(head_node, URIRef | Literal):
         if head_node != fact_node:
@@ -25,7 +25,9 @@ def bind_node(
         yield bindings
     elif isinstance(head_node, BNode | Variable):
         if bindings.get(head_node, fact_node) != fact_node:
-            return
+            if head_node != fact_node:
+                return
+            yield bindings
         new_bindings = bindings.copy()
         new_bindings[head_node] = fact_node
         yield new_bindings
@@ -43,14 +45,14 @@ def bind(
     fact: Triple,
     bindings: Bindings | None = None,
     *,
-    match_to_var: bool = False,
+    match_mode: bool = False,
 ) -> Iterator[Bindings]:
     if bindings is None:
         bindings = {}
     s, p, o = head_clause
-    for s_binding in bind_node(s, fact[0], bindings, match_to_var=match_to_var):
-        for p_binding in bind_node(p, fact[1], s_binding, match_to_var=match_to_var):
-            yield from bind_node(o, fact[2], p_binding, match_to_var=match_to_var)
+    for s_binding in bind_node(s, fact[0], bindings, match_mode=match_mode):
+        for p_binding in bind_node(p, fact[1], s_binding, match_mode=match_mode):
+            yield from bind_node(o, fact[2], p_binding, match_mode=match_mode)
 
 
 def mask_node(node: Node, bindings: Bindings) -> Node | None:
@@ -62,7 +64,9 @@ def mask_node(node: Node, bindings: Bindings) -> Node | None:
     return node
 
 
-def mask(head_clause: Triple, bindings: Bindings) -> Mask:
+def mask(head_clause: Triple, bindings: Bindings = None) -> Mask:
+    if bindings is None:
+        bindings = {}
     return (
         mask_node(head_clause[0], bindings),
         mask_node(head_clause[1], bindings),

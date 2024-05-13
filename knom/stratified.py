@@ -1,100 +1,92 @@
-import itertools
 from collections.abc import Iterable
+from typing import cast
 
-from rdflib import Graph
+from rdflib import Graph, URIRef, Variable
+from rdflib.graph import QuotedGraph
 
-from knom import Triple, bind, single_pass
+from knom import LOG, mask, single_pass
+from knom.typing import Triple
+from knom.util import print_rule
 
-Dependencies = set[tuple[Triple, Triple]]
-
-
-def matches(triple1: Triple, triple2: Triple) -> bool:
-    try:
-        next(iter(bind(triple1, triple2, match_to_var=True)))
-    except StopIteration:
-        pass
-    else:
-        return True
-    try:
-        next(iter(bind(triple2, triple1, match_to_var=True)))
-    except StopIteration:
-        return False
-    return True
+Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
+Stratas = dict[Rule, int]
 
 
-def calculate_clause_dependencies(
-    all_clauses: Iterable[Triple],
-) -> Dependencies:
-    depends = set()
-    for clause1 in all_clauses:
-        for clause2 in all_clauses:
-            if clause1 == clause2:
-                continue
-            if not matches(clause1, clause2):
-                continue
-            depends.add((clause1, clause2))
-    return depends
+def filter_rules(g: Graph) -> Iterable[Rule]:
+    for triple in g.triples((None, LOG.implies, None)):
+        yield cast(Rule, triple)
 
 
-def get_all_clauses(rules: Graph) -> Iterable[Triple]:
-    all_clauses: set[Triple] = set()
-    for head, _, body in rules:
-        assert isinstance(head, Graph)
-        assert isinstance(body, Graph)
-        all_clauses.update(head)
-        all_clauses.update(body)
-    return list(all_clauses)
+def matches(head: Triple, fact: Triple) -> bool:
+    #print("checking match", print_triple(head), "with", print_triple(fact))
+    return all(n1 == n2 or n1 is None or n2 is None for n1, n2 in zip(mask(head), mask(fact), strict=True))
 
 
-def stratify_clauses(
-    all_clauses: Iterable[Triple],
-    depends: Dependencies,
-) -> dict[Triple, int]:
-    stratas = {c: 0 for c in all_clauses}
-    while True:
-        stratified = True
-        for clause1 in all_clauses:
-            for clause2 in all_clauses:
-                if clause1 == clause2:
-                    continue
-                tup = (clause1, clause2)
-                if tup in depends and stratas[clause2] <= stratas[clause1]:
-                    stratas[clause2] += 1
-                    stratified = False
-                if tup in depends and stratas[clause1] <= stratas[clause2]:
-                    stratas[clause2] += 1
-                    stratified = False
-        if stratified:
-            break
-    return stratas
+def clauses_depend(clauses: Graph, other_clauses: Graph) -> bool:
+    for triple1 in clauses:
+        for triple2 in other_clauses:
+            if matches(triple1, triple2):
+                return True
+    return False
 
 
-def stratify_rules(rules: Graph) -> Iterable[Iterable[Triple]]:
-    all_clauses = get_all_clauses(rules)
-    depends = calculate_clause_dependencies(all_clauses)
-    clause_stratas = stratify_clauses(all_clauses, depends)
-
-    rule_stratas: dict[int, list[Triple]] = {}
-    for rule in rules:
-        head, _, body = rule
-        assert isinstance(head, Graph)
-        assert isinstance(body, Graph)
-        strata = max([clause_stratas[clause] for clause in itertools.chain(head, body)])
-        if strata not in rule_stratas:
-            rule_stratas[strata] = []
-        rule_stratas[strata].append(rule)
-    return [rule_stratas[i] for i in sorted(rule_stratas.keys())]
+def dependent_rules(rule_with_body: Rule, rules_with_head: Graph) -> Iterable[Rule]:
+    return {rule for rule in filter_rules(rules_with_head) if clauses_depend(rule_with_body[2], rule[0])}
 
 
-def stratified(rules: Graph, facts: Graph) -> Graph:
+def triggering_rules(rule_with_head: Rule, rules_with_body: Graph) -> Iterable[Rule]:
+    return {rule for rule in filter_rules(rules_with_body) if clauses_depend(rule_with_head[0], rule[2])}
+
+
+def stratify_rule(rule: Rule, rules: Graph, stratas: Stratas, visited: set[Rule], level=0) -> None:
+    print("rule", print_rule(rule))
+    for trigger_rule in triggering_rules(rule, rules):
+        print("triggering rule", print_rule(rule))
+        if trigger_rule not in visited:
+            print("trigger not visited yet, visiting")
+            visited.add(trigger_rule)
+            stratify_rule(trigger_rule, rules, stratas, visited, level+1)
+        else:
+            print("trigger visited")
+
+        if trigger_rule not in stratas:
+            print("trigger not in strata, assigning 0")
+            stratas[trigger_rule] = 0
+
+        stratas[rule] = stratas[trigger_rule]
+        if rule not in visited:
+            print("this rule is not part of cycle, increasing strata")
+            stratas[rule] += 1
+        print("set rule strata to", stratas[rule])
+    if rule not in stratas:
+        print("rule not in strata, assigning 0")
+        stratas[rule] = 0
+
+
+def stratify_rules(rules: Graph) -> Iterable[Graph]:
+    stratas: Stratas = {}
+    visited: set[Rule] = set()
+
+    for rule in filter_rules(rules):
+        stratify_rule(rule, rules, stratas, visited)
+
+    prev = -1
+    stratified_rules = []
+    for rule, i in sorted(stratas.items(), key=lambda item: item[1]):
+        if prev < i:
+            print("strata", i)
+            strata = Graph()
+            stratified_rules.append(strata)
+        print(print_rule(rule))
+        strata.add(rule)
+        prev = i
+    return stratified_rules
+
+
+def execute(rules: Graph, facts: Graph) -> Graph:
     stratas = stratify_rules(rules)
     inferred = Graph()
     for strata in stratas:
-        for new_tuple in single_pass(facts, strata):
-            inferred.add(new_tuple)
-        new_inferred = Graph()
-        for new_tuple in single_pass(inferred, strata):
-            new_inferred.add(new_tuple)
-        for new_tuple in new_inferred:
+        for new_tuple in single_pass(facts + inferred, strata):
             inferred.add(new_tuple)
     return inferred

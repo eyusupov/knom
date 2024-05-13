@@ -1,0 +1,7 @@
+@prefix : <http://example.com/>.
+
+:a a :List;
+  :first { :bidrs :can :fly };
+  :rest _:a.
+
+{ ?x :rest ?y. ?x :first { ?a ?b ?c } } => { ?y :rest _:z; :first { _:b ?b :jump } }.

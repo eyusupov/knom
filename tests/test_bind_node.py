@@ -16,6 +16,7 @@ from . import (
     varaa_graph,
 )
 
+# TODO: add match_mode tests
 
 def test_bind_node_var_to_bn() -> None:
     bindings = list(bind_node(var_a, bn_a))
