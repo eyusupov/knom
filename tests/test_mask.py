@@ -1,6 +1,6 @@
 from knom import mask
 
-from . import EX, bn_a, bn_b, bn_c, lit_a, lit_b, lit_c, var_a, var_c
+from . import EX, bn_a, bn_b, bn_c, lit_a, lit_b, lit_c, lit_graph, var_a, var_c
 
 
 def test_mask() -> None:
@@ -34,3 +34,24 @@ def test_mask_bound_bnode_to_bnode() -> None:
         (var_a, bn_a, bn_c),
         {var_a: lit_a, bn_a: bn_b},
     ) == (lit_a, bn_b, None)
+
+
+def test_mask_graph() -> None:
+    assert mask(
+        (var_a, bn_a, lit_graph),
+        {var_a: lit_a, bn_a: lit_c},
+    ) == (lit_a, lit_c, None)
+
+
+def test_mask_bound_graph() -> None:
+    assert mask(
+        (var_a, bn_a, EX.c),
+        {var_a: lit_graph, bn_a: lit_c},
+    ) == (lit_graph, lit_c, EX.c)
+
+
+def test_mask_bound_graph_to_bnode() -> None:
+    assert mask(
+        (var_a, bn_a, EX.c),
+        {var_a: lit_a, bn_a: lit_graph},
+    ) == (lit_a, lit_graph, EX.c)

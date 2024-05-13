@@ -85,4 +85,29 @@
       mf:action <single-pass/several-matches-unbound-var.n3>;
       mf:result <single-pass/several-matches-unbound-var-ref.n3>;
     ]
+    [
+      mf:name "Rules with quoted statements produce quoted statements";
+      mf:action <scoping/unquoting.n3>;
+      mf:result <scoping/unquoting-ref.n3>;
+    ]
+    [
+      mf:name "Graph terms can be present in the head";
+      mf:action <scoping/graph-term.n3>;
+      mf:result <scoping/graph-term-ref.n3>;
+    ]
+    [
+      mf:name "Graph terms in the head can contain variables";
+      mf:action <scoping/graph-term-var.n3>;
+      mf:result <scoping/graph-term-var-ref.n3>;
+    ]
+    [
+      mf:name "Nested graph terms in the head can contain variables";
+      mf:action <scoping/graph-term-nested-var.n3>;
+      mf:result <scoping/graph-term-nested-var-ref.n3>;
+    ]
+    [
+      mf:name "All clauses in the graph term must match";
+      mf:action <scoping/graph-term-all-clauses-match.n3>;
+      mf:result <scoping/graph-term-all-clauses-match-ref.n3>;
+    ]
   ).
