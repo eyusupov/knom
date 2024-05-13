@@ -40,7 +40,7 @@ def test_mask_graph() -> None:
     assert mask(
         (var_a, bn_a, lit_graph),
         {var_a: lit_a, bn_a: lit_c},
-    ) == (lit_a, lit_c, lit_graph)
+    ) == (lit_a, lit_c, None)
 
 
 def test_mask_bound_graph() -> None:
