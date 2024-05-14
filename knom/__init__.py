@@ -64,7 +64,7 @@ def mask_node(node: Node, bindings: Bindings) -> Node | None:
     return node
 
 
-def mask(head_clause: Triple, bindings: Bindings = None) -> Mask:
+def mask(head_clause: Triple, bindings: Bindings | None = None) -> Mask:
     if bindings is None:
         bindings = {}
     return (
