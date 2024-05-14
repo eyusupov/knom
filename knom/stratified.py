@@ -9,7 +9,7 @@ from knom.typing import Triple
 from knom.util import print_rule
 
 Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
-Stratas = dict[Rule, int]
+RuleIndex = dict[Rule, int]
 
 
 def filter_rules(g: Graph) -> Iterable[Rule]:
@@ -38,56 +38,42 @@ def triggering_rules(rule_with_head: Rule, rules_with_body: Graph) -> Iterable[R
     return {rule for rule in filter_rules(rules_with_body) if clauses_depend(rule_with_head[0], rule[2])}
 
 
-def last_strata(stratas: Stratas) -> int:
-    if stratas:
-        return max(stratas.values()) + 1
+def last_index(index: RuleIndex) -> int:
+    if index:
+        return max(index.values())
     return 0
 
 
-def stratify_rule(rule: Rule, rules: Graph, stratas: Stratas, visited: set[Rule], stratified: list[Rule], level=0) -> None:
-    print(level, "stratify rule", print_rule(rule))
-    if rule not in visited:
-        visited.add(rule)
-        for trigger_rule in dependent_rules(rule, rules):
-            print(level, "processing neighbor", print_rule(trigger_rule))
-            stratify_rule(trigger_rule, rules, stratas, visited, stratified, level+1)
-        stratified.insert(0, rule)
-
-def assign_strata(rule: Rule, rules: Graph, stratas: Stratas, counter: int, level: int = 0) -> None:
-    if rule not in stratas:
-        print(level, "assign strata", print_rule(rule), counter)
-        stratas[rule] = counter
-        for trigger in triggering_rules(rule, rules):
-            print(level, "processing neighbor", print_rule(rule), counter)
-            assign_strata(trigger, rules, stratas, counter, level+1)
-
+def stratify_rule(rule: Rule, rules: Graph, sccs: list[Graph], index: RuleIndex, low: RuleIndex, stack: list[Rule], level: int=0) -> None:
+    index[rule] = last_index(index) + 1
+    low[rule] = index[rule]
+    stack.append(rule)
+    for trigger in triggering_rules(rule, rules):
+        if trigger not in index:
+            stratify_rule(trigger, rules, sccs, index, low, stack, level+1)
+            low[rule] = min(low[rule], low[trigger])
+        elif trigger in stack:
+            low[rule] = min(low[trigger], index[rule])
+    if low[rule] == index[rule]:
+        print("strata")
+        top = None
+        scc = Graph()
+        while top != rule:
+            top = stack.pop()
+            print(print_rule(top))
+            scc.add(top)
+        sccs.append(scc)
 
 
 def stratify_rules(rules: Graph) -> Iterable[Graph]:
-    print("!!! stratifying")
-    stratas: Stratas = {}
-    visited: set[Rule] = set()
-    stratified: list[Rule] = []
-
+    index: RuleIndex = {}
+    low: RuleIndex = {}
+    stack: list[Rule] = []
+    stratified_rules: list[Graph] = []
     for rule in filter_rules(rules):
-        stratify_rule(rule, rules, stratas, visited, stratified)
+        if rule not in index:
+            stratify_rule(rule, rules, stratified_rules, index, low, stack)
 
-    counter = 0
-    for rule in stratified:
-        if rule not in stratas:
-            counter += 1
-            assign_strata(rule, rules, stratas, counter)
-
-    prev = -1
-    stratified_rules = []
-    for rule, i in sorted(stratas.items(), key=lambda item: item[1]):
-        if prev < i:
-            print("strata", i)
-            strata = Graph()
-            stratified_rules.append(strata)
-        print(print_rule(rule))
-        strata.add(rule)
-        prev = i
     return stratified_rules
 
 
