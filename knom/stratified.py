@@ -144,10 +144,13 @@ def stratify_rules(rules: Graph) -> Iterable[Graph]:
     return stratified_rules
 
 
-def execute(rules: Graph, facts: Graph) -> Graph:
+def stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
     stratas = stratify_rules(rules)
-    inferred = Graph()
-    for strata in stratas:
-        for new_tuple in single_pass(facts + inferred, strata):
-            inferred.add(new_tuple)
-    return inferred
+    feed = Graph()
+    for triple in facts:
+        feed.add(triple)
+    for i, strata in enumerate(stratas):
+        print("pass ", i)
+        for new_tuple in single_pass(feed, strata):
+            yield new_tuple
+            feed.add(new_tuple)
