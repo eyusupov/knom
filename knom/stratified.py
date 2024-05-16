@@ -47,19 +47,19 @@ def head_depends_on_body(head_clauses: Graph | Variable, body_clauses: Graph | V
     assert isinstance(head_clauses, Graph)
     assert isinstance(body_clauses, Graph)
 
-    all_bnodes_match = True
     for body_triple in body_clauses:
-        bnodes_match = False if has_bnodes(body_triple) else True
+        bnodes_match = not has_bnodes(body_triple)
         for head_triple in head_clauses:
             if matches(body_triple, head_triple):
                 if has_bnodes(body_triple):
+                    # BNodes in the body always produce new variables,
+                    # so for them other rules can't provide missing triples
                     bnodes_match = True
                     break
-                else:
-                    return True
+                return True
         if not bnodes_match:
-            all_bnodes_match = False
-    return all_bnodes_match
+            return False
+    return True
 
 def head(rule):
     s, p, o = rule
