@@ -18,11 +18,15 @@ def filter_rules(g: Graph) -> Iterable[Rule]:
 
 
 def matches(head: Triple, fact: Triple) -> bool:
-    #print("checking match", print_triple(head), "with", print_triple(fact))
-    return all(n1 == n2 or n1 is None or n2 is None for n1, n2 in zip(mask(head), mask(fact), strict=True))
+    return all(
+        n1 == n2 or n1 is None or n2 is None
+        for n1, n2 in zip(mask(head), mask(fact), strict=True)
+    )
 
 
-def clauses_depend(clauses: Graph, other_clauses: Graph) -> bool:
+def clauses_depend(clauses: Graph | Variable, other_clauses: Graph | Variable) -> bool:
+    assert isinstance(clauses, Graph)
+    assert isinstance(other_clauses, Graph)
     for triple1 in clauses:
         for triple2 in other_clauses:
             if matches(triple1, triple2):
@@ -30,12 +34,12 @@ def clauses_depend(clauses: Graph, other_clauses: Graph) -> bool:
     return False
 
 
-def dependent_rules(rule_with_body: Rule, rules_with_head: Graph) -> Iterable[Rule]:
-    return {rule for rule in filter_rules(rules_with_head) if clauses_depend(rule_with_body[2], rule[0])}
-
-
 def triggering_rules(rule_with_head: Rule, rules_with_body: Graph) -> Iterable[Rule]:
-    return {rule for rule in filter_rules(rules_with_body) if clauses_depend(rule_with_head[0], rule[2])}
+    return {
+        rule
+        for rule in filter_rules(rules_with_body)
+        if clauses_depend(rule_with_head[0], rule[2])
+    }
 
 
 def last_index(index: RuleIndex) -> int:
@@ -44,36 +48,48 @@ def last_index(index: RuleIndex) -> int:
     return 0
 
 
-def stratify_rule(rule: Rule, rules: Graph, sccs: list[Graph], index: RuleIndex, low: RuleIndex, stack: list[Rule], level: int=0) -> None:
-    index[rule] = last_index(index) + 1
-    low[rule] = index[rule]
-    stack.append(rule)
+class _TarjanState:
+    def __init__(self) -> None:
+        self.index: dict[Rule, int] = {}
+        self.low: dict[Rule,int] = {}
+        self.stack: list[Rule]= []
+        self.counter: int = 0
+
+    def new_index(self) -> int:
+        index = self.counter
+        self.counter += 1
+        return index
+
+
+def stratify_rule(
+    rule: Rule,
+    rules: Graph,
+    state: _TarjanState
+) -> Iterable[Graph]:
+    state.index[rule] = state.new_index()
+    state.low[rule] = state.index[rule]
+    state.stack.append(rule)
     for trigger in triggering_rules(rule, rules):
-        if trigger not in index:
-            stratify_rule(trigger, rules, sccs, index, low, stack, level+1)
-            low[rule] = min(low[rule], low[trigger])
-        elif trigger in stack:
-            low[rule] = min(low[trigger], index[rule])
-    if low[rule] == index[rule]:
-        print("strata")
+        if trigger not in state.index:
+            yield from stratify_rule(trigger, rules, state)
+            state.low[rule] = min(state.low[rule], state.low[trigger])
+        elif trigger in state.stack:
+            state.low[rule] = min(state.low[trigger], state.index[rule])
+    if state.low[rule] == state.index[rule]:
         top = None
         scc = Graph()
         while top != rule:
-            top = stack.pop()
-            print(print_rule(top))
+            top = state.stack.pop()
             scc.add(top)
-        sccs.append(scc)
+        yield scc
 
 
 def stratify_rules(rules: Graph) -> Iterable[Graph]:
-    index: RuleIndex = {}
-    low: RuleIndex = {}
-    stack: list[Rule] = []
     stratified_rules: list[Graph] = []
+    state = _TarjanState()
     for rule in filter_rules(rules):
-        if rule not in index:
-            stratify_rule(rule, rules, stratified_rules, index, low, stack)
-
+        if rule not in state.index:
+            stratified_rules.extend(stratify_rule(rule, rules, state))
     return stratified_rules
 
 
