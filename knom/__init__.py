@@ -142,6 +142,9 @@ def optimization_order(triple: Triple) -> int:
 
 
 def optimize(head: Graph) -> list[Triple]:
+    # TODO:
+    # take into account order of variable usage? and also it's not just an optimization anymore
+    # due to builtins priority
     return sorted(head, key=optimization_order, reverse=True)
 
 

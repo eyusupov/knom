@@ -60,20 +60,18 @@ def head_depends_on_body(head_clauses: Graph | Variable, body_clauses: Graph | V
             return False
     return True
 
-def head(rule):
+def head(rule: Triple) -> Node:
     s, p, o = rule
     if p == LOG.implies:
         return s
-    else:
-        return o
+    return o
 
 
-def body(rule):
+def body(rule: Triple) -> Node:
     s, p, o = rule
     if p == LOG.implies:
         return o
-    else:
-        return s
+    return s
 
 
 def triggering_rules(rule_with_body: Rule, rules_with_head: Graph) -> Iterable[Rule]:
