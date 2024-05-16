@@ -13,7 +13,7 @@ RuleIndex = dict[Rule, int]
 
 
 def filter_rules(g: Graph) -> Iterable[Rule]:
-    for triple in g.triples((None, LOG.implies, None)):
+    for triple in g.triples_choices((None, (LOG.implies, LOG.impliedBy), None)):
         yield cast(Rule, triple)
 
 
@@ -33,12 +33,27 @@ def clauses_depend(clauses: Graph | Variable, other_clauses: Graph | Variable) -
                 return True
     return False
 
+def head(rule):
+    s, p, o = rule
+    if p == LOG.implies:
+        return s
+    else:
+        return o
+
+
+def body(rule):
+    s, p, o = rule
+    if p == LOG.implies:
+        return o
+    else:
+        return s
+
 
 def triggering_rules(rule_with_head: Rule, rules_with_body: Graph) -> Iterable[Rule]:
     return {
         rule
         for rule in filter_rules(rules_with_body)
-        if clauses_depend(rule_with_head[0], rule[2])
+        if clauses_depend(head(rule_with_head), body(rule))
     }
 
 

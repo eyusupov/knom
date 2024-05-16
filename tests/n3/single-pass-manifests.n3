@@ -16,6 +16,11 @@
       mf:result <single-pass/simple-match-ref.n3>
     ]
     [
+      mf:name "Implied by: simple rule matching a fact";
+      mf:action <single-pass/simple-implied-by-match.n3>;
+      mf:result <single-pass/simple-implied-by-match-ref.n3>
+    ]
+    [
       mf:name "Unbound variable in conclusion produces a bnode";
       mf:action <single-pass/unbound-variable-in-conclusion.n3>;
       mf:result <single-pass/unbound-variable-in-conclusion-ref.n3>

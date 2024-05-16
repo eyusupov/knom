@@ -70,7 +70,7 @@ def split_rules_and_facts(graph: Graph) -> tuple[Graph, Graph]:
     rules = Graph(namespace_manager=graph.namespace_manager)
     facts = Graph(namespace_manager=graph.namespace_manager)
     for s, p, o in graph:
-        if p == LOG.implies:
+        if p in [LOG.implies, LOG.impliedBy]:
             rules.add((s, p, o))
         else:
             facts.add((s, p, o))

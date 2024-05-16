@@ -108,9 +108,16 @@ def assign(triple: Triple, bindings: Bindings) -> Triple:
 
 
 def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
-    for head, implies, body in rules:
+    for s, p, o in rules:
+        if p == LOG.implies:
+            head = s
+            body = o
+        elif p == LOG.impliedBy:
+            head = o
+            body = s
+        else:
+            continue
         assert isinstance(head, Graph)
-        assert implies == LOG.implies
         for bindings in match_rule(list(head), facts, {}):
             if isinstance(body, Variable):
                 g = bindings[body]
