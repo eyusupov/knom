@@ -6,7 +6,7 @@ from rdflib.term import Node
 
 from knom.typing import Bindings, Mask, Triple
 from knom.util import LOG
-from knom.util import print_triple
+from knom.util import print_triple, print_rule
 
 
 def bind_node(
@@ -82,9 +82,12 @@ def match_rule(
         yield bindings
     else:
         head_clause = head[0]
+        #print("head_clause", print_triple(head_clause, facts.namespace_manager))
         mask_ = mask(head_clause, bindings)
-        for fact in facts.triples(mask_):
-            #print("head_clause", print_triple(head_clause, facts.namespace_manager))
+        triples = facts.triples(mask_)
+        #print("triples", len(list(triples)))
+        triples = facts.triples(mask_)
+        for fact in triples:
             #print("feeding", print_triple(fact, facts.namespace_manager))
             new_bindings = bindings.copy()
             for binding in bind(head_clause, fact, new_bindings):
@@ -117,6 +120,26 @@ def assign(triple: Triple, bindings: Bindings) -> Triple:
     )
 
 
+def optimization_order(triple: Triple):
+    from rdflib import RDF
+    s, p, o = triple
+    prio = 0
+    if p == RDF.type:
+        prio += 1
+    if isinstance(s, URIRef | Literal):
+        prio += 1
+    if isinstance(p, URIRef | Literal):
+        prio += 1
+    if isinstance(o, URIRef | Literal):
+        prio += 1
+    return prio
+
+
+
+def optimize(head: Graph) -> list[Triple]:
+    return sorted(head, key=optimization_order, reverse=True)
+
+
 def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
     for s, p, o in rules:
         if p == LOG.implies:
@@ -128,7 +151,7 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
         else:
             continue
         assert isinstance(head, Graph)
-        for bindings in match_rule(list(head), facts, {}):
+        for bindings in match_rule(optimize(head), facts, {}):
             if isinstance(body, Variable):
                 g = bindings[body]
                 assert isinstance(g, Graph)
@@ -152,7 +175,6 @@ def naive_fixpoint(facts: Graph, rules: Graph) -> Graph:
         old_inferred = len(inferred)
         print("pass ", i)
         for new_triple in single_pass(feed, rules):
-            print("inferred", print_triple(new_triple, facts.namespace_manager))
             inferred.add(new_triple)
             feed.add(new_triple)
         if len(inferred) == old_inferred:
