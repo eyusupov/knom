@@ -1,13 +1,12 @@
 from collections.abc import Iterable
 from typing import cast
 
-from rdflib import Graph, URIRef, Variable, BNode
+from rdflib import BNode, Graph, URIRef, Variable
 from rdflib.graph import QuotedGraph
 from rdflib.term import Node
 
-from knom import LOG, mask, single_pass
+from knom import LOG, single_pass
 from knom.typing import Triple
-from knom.util import print_rule
 
 Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
 RuleIndex = dict[Rule, int]

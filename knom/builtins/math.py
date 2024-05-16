@@ -1,9 +1,15 @@
+from collections.abc import Iterator
+
 from rdflib import Literal
 
-
-def notLessThan(s: Literal, o: Literal):
-    pass
+from knom.typing import Bindings
 
 
-def notGreaterThan(s: Literal, o: Literal):
-    pass
+def notLessThan(s: Literal, o: Literal, bindings: Bindings) -> Iterator[Bindings]:
+    # TODO
+    yield bindings
+
+
+def notGreaterThan(s: Literal, o: Literal, bindings: Bindings) -> Iterator[Bindings]:
+    # TODO
+    yield bindings

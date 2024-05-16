@@ -120,4 +120,14 @@
       mf:action <single-pass/multiple-facts.n3>;
       mf:result <single-pass/multiple-facts-ref.n3>;
     ]
+    [
+      mf:name "string:ord builtin, variable arg";
+      mf:action <builtins/string-ord-variable.n3>;
+      mf:result <builtins/string-ord-variable-ref.n3>;
+    ]
+    [
+      mf:name "string:ord builtin, literal arg";
+      mf:action <builtins/string-ord-literal.n3>;
+      mf:result <builtins/string-ord-literal-ref.n3>;
+    ]
   ).

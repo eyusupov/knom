@@ -4,11 +4,9 @@ from typing import cast
 from rdflib import BNode, Graph, Literal, URIRef, Variable
 from rdflib.term import Node
 
+from knom.builtins import BUILTINS
 from knom.typing import Bindings, Mask, Triple
 from knom.util import LOG
-from knom.util import print_triple, print_rule
-
-from builtins import BUILTINS
 
 
 def bind_node(
@@ -50,14 +48,9 @@ def bind(
     *,
     match_mode: bool = False,
 ) -> Iterator[Bindings]:
+    s, p, o = head_clause
     if bindings is None:
         bindings = {}
-    s, p, o = head_clause
-    if p in BUILTINS:
-        if BUILTINS[p](s, o):
-            yield bindings
-        else:
-            return
     for s_binding in bind_node(s, fact[0], bindings, match_mode=match_mode):
         for p_binding in bind_node(p, fact[1], s_binding, match_mode=match_mode):
             yield from bind_node(o, fact[2], p_binding, match_mode=match_mode)
@@ -89,16 +82,18 @@ def match_rule(
         yield bindings
     else:
         head_clause = head[0]
-        #print("head_clause", print_triple(head_clause, facts.namespace_manager))
-        mask_ = mask(head_clause, bindings)
-        triples = facts.triples(mask_)
-        #print("triples", len(list(triples)))
-        triples = facts.triples(mask_)
-        for fact in triples:
-            #print("feeding", print_triple(fact, facts.namespace_manager))
-            new_bindings = bindings.copy()
-            for binding in bind(head_clause, fact, new_bindings):
+        s, p, o = head_clause
+        if p in BUILTINS:
+            for binding in BUILTINS[p](s, o, bindings.copy()):
                 yield from match_rule(head[1:], facts, binding)
+        else:
+            mask_ = mask(head_clause, bindings)
+            triples = facts.triples(mask_)
+            for fact in triples:
+                #print("feeding", print_triple(fact, facts.namespace_manager))
+                new_bindings = bindings.copy()
+                for binding in bind(head_clause, fact, new_bindings):
+                    yield from match_rule(head[1:], facts, binding)
 
 
 def instantiate_bnodes(body: Graph, bindings: Bindings) -> None:
@@ -157,7 +152,6 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
             body = s
         else:
             continue
-        print(print_rule((s, p, o)))
         assert isinstance(head, Graph)
         for bindings in match_rule(optimize(head), facts, {}):
             if isinstance(body, Variable):
