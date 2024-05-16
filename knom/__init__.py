@@ -8,6 +8,8 @@ from knom.typing import Bindings, Mask, Triple
 from knom.util import LOG
 from knom.util import print_triple, print_rule
 
+from builtins import BUILTINS
+
 
 def bind_node(
     head_node: Node,
@@ -51,6 +53,11 @@ def bind(
     if bindings is None:
         bindings = {}
     s, p, o = head_clause
+    if p in BUILTINS:
+        if BUILTINS[p](s, o):
+            yield bindings
+        else:
+            return
     for s_binding in bind_node(s, fact[0], bindings, match_mode=match_mode):
         for p_binding in bind_node(p, fact[1], s_binding, match_mode=match_mode):
             yield from bind_node(o, fact[2], p_binding, match_mode=match_mode)
@@ -150,6 +157,7 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
             body = s
         else:
             continue
+        print(print_rule((s, p, o)))
         assert isinstance(head, Graph)
         for bindings in match_rule(optimize(head), facts, {}):
             if isinstance(body, Variable):
