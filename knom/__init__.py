@@ -122,7 +122,7 @@ def assign(triple: Triple, bindings: Bindings) -> Triple:
     )
 
 
-def optimization_order(triple: Triple):
+def optimization_order(triple: Triple) -> int:
     from rdflib import RDF
     s, p, o = triple
     prio = 0
@@ -134,6 +134,9 @@ def optimization_order(triple: Triple):
         prio += 1
     if isinstance(o, URIRef | Literal):
         prio += 1
+    if p in BUILTINS:
+        # Execute builtins last so that everything is bound
+        prio = 0
     return prio
 
 

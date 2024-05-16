@@ -1,26 +1,35 @@
 from collections.abc import Iterator
 
 from rdflib import Literal, Variable, BNode
+from rdflib.term import Node
 
 from knom.typing import Bindings
 
-
-def notLessThan(s: Literal, o: Literal, bindings: Bindings) -> Iterator[Bindings]:
-    assert isinstance(s.value, str)
-    assert isinstance(o.value, str)
-    if s.value >= o.value:
-        yield bindings
-
-
-def notGreaterThan(s: Literal, o: Literal, bindings: Bindings) -> Iterator[Bindings]:
-    assert isinstance(s.value, str)
-    assert isinstance(o.value, str)
-    if s.value <= o.value:
-        yield bindings
-
-
-def ord_(s: Literal, o: Literal, bindings: Bindings) -> Iterator[Bindings]:
+def _get_cmp_args(s: Node, o: Node, bindings: Bindings) -> tuple[str, str]:
+    s_ = bindings[s] if isinstance(s, Variable | BNode) else s
     o_ = bindings[o] if isinstance(o, Variable | BNode) else o
+    assert isinstance(s_, Literal)
+    assert isinstance(o_, Literal)
+    assert isinstance(s_.value, str)
+    assert isinstance(o_.value, str)
+    return s_.value, o_.value
+
+
+def not_less_than(s: Node, o: Node, bindings: Bindings) -> Iterator[Bindings]:
+    s_, o_ = _get_cmp_args(s, o, bindings)
+    if s_ >= o_:
+        yield bindings
+
+
+def not_greater_than(s: Node, o: Node, bindings: Bindings) -> Iterator[Bindings]:
+    s_, o_ = _get_cmp_args(s, o, bindings)
+    if s_ <= o_:
+        yield bindings
+
+
+def ord_(s: Node, o: Node, bindings: Bindings) -> Iterator[Bindings]:
+    o_ = bindings[o] if isinstance(o, Variable | BNode) else o
+    assert isinstance(o_, Literal)
     val = Literal(ord(o_.value))
     assert isinstance(o_, str)
     if isinstance(s, Variable):
