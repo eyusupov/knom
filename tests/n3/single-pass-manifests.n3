@@ -130,4 +130,9 @@
       mf:action <builtins/string-ord-literal.n3>;
       mf:result <builtins/string-ord-literal-ref.n3>;
     ]
+    [
+      mf:name "string:ord builtin, compare args";
+      mf:action <builtins/string-ord-compare.n3>;
+      mf:result <builtins/string-ord-compare-ref.n3>;
+    ]
   ).
