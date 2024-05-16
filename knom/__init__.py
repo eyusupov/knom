@@ -6,6 +6,7 @@ from rdflib.term import Node
 
 from knom.typing import Bindings, Mask, Triple
 from knom.util import LOG
+from knom.util import print_triple
 
 
 def bind_node(
@@ -83,9 +84,18 @@ def match_rule(
         head_clause = head[0]
         mask_ = mask(head_clause, bindings)
         for fact in facts.triples(mask_):
+            #print("head_clause", print_triple(head_clause, facts.namespace_manager))
+            #print("feeding", print_triple(fact, facts.namespace_manager))
             new_bindings = bindings.copy()
             for binding in bind(head_clause, fact, new_bindings):
                 yield from match_rule(head[1:], facts, binding)
+
+
+def instantiate_bnodes(body: Graph, bindings: Bindings) -> None:
+    for triple in body:
+        for node in triple:
+            if isinstance(node, BNode) and node not in bindings:
+                bindings[node] = BNode()
 
 
 def assign_node(node: Node, bindings: Bindings) -> Node:
@@ -126,20 +136,26 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
                     yield triple
             else:
                 assert isinstance(body, Graph)
+                bindings_ = bindings.copy()
+                instantiate_bnodes(body, bindings_)
                 for triple in body:
-                    yield assign(triple, bindings)
+                    yield assign(triple, bindings_)
 
 
 def naive_fixpoint(facts: Graph, rules: Graph) -> Graph:
     inferred = Graph(namespace_manager=facts.namespace_manager)
-    feed = facts
+    feed = Graph()
+    for fact in facts:
+        feed.add(fact)
+    i = 1
     while True:
-        new_feed = Graph()
         old_inferred = len(inferred)
-        for new_tuple in single_pass(feed, rules):
-            inferred.add(new_tuple)
-            new_feed.add(new_tuple)
+        print("pass ", i)
+        for new_triple in single_pass(feed, rules):
+            print("inferred", print_triple(new_triple, facts.namespace_manager))
+            inferred.add(new_triple)
+            feed.add(new_triple)
         if len(inferred) == old_inferred:
             break
-        feed = new_feed
+        i += 1
     return inferred

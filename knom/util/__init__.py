@@ -26,8 +26,11 @@ def print_graph(formula: Graph) -> str:
 
 
 def print_rule(rule: Triple) -> str:
-    head, implies, body = rule
-    assert implies == LOG.implies
-    assert isinstance(head, Graph)
-    assert isinstance(body, Graph)
-    return f"{print_graph(head)} => {print_graph(body)}"
+    s, p, o = rule
+    assert isinstance(s, Graph)
+    assert isinstance(o, Graph)
+    if p == LOG.implies:
+        return f"{print_graph(s)} => {print_graph(o)}"
+    if p == LOG.impliedBy:
+        return f"{print_graph(o)} => {print_graph(s)}"
+    raise ValueError

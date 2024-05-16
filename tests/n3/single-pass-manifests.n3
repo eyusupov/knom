@@ -115,4 +115,9 @@
       mf:action <scoping/graph-term-all-clauses-match.n3>;
       mf:result <scoping/graph-term-all-clauses-match-ref.n3>;
     ]
+    [
+      mf:name "Multiple facts are needed to fully match the premise";
+      mf:action <single-pass/multiple-facts.n3>;
+      mf:result <single-pass/multiple-facts-ref.n3>;
+    ]
   ).

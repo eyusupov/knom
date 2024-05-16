@@ -13,3 +13,16 @@
   - We can add rules and facts on the fly and rerun only affected parts based on the stratification algorithm
   - Real-time inference output
   - We can use reason ontology for all of this
+
+# Stratification:
+# Triggers means binds to all the clauses in the body. It will not work.
+# Or will it? Yes, it will, because the initial pass has been done, and we don't keep the partial matches between the passes, so the new pass will not work.
+# What if we keep partial matches between the passes, but not the newly produced triples?
+# What does it mean to keep partial matches?
+# a) Just save the facts that "almost triggered" the rule, then feed these facts again
+# this will produce some duplicates (in the sense of bnodes), but we're ok with it for now (because the triples with such bnodes will be "isomorphic" to one another)
+# But then can't we just reseed the facts again?
+# Yes, actually we can, if there is no recursion
+# What if there is a recursion?
+# Then it will have to follow a non-recursion, and we will execute it once
+# Great!

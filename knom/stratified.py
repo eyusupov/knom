@@ -1,8 +1,9 @@
 from collections.abc import Iterable
 from typing import cast
 
-from rdflib import Graph, URIRef, Variable
+from rdflib import Graph, URIRef, Variable, BNode
 from rdflib.graph import QuotedGraph
+from rdflib.term import Node
 
 from knom import LOG, mask, single_pass
 from knom.typing import Triple
@@ -13,25 +14,52 @@ RuleIndex = dict[Rule, int]
 
 
 def filter_rules(g: Graph) -> Iterable[Rule]:
-    for triple in g.triples_choices((None, (LOG.implies, LOG.impliedBy), None)):
+    for triple in g.triples_choices((None, [LOG.implies, LOG.impliedBy], None)):
         yield cast(Rule, triple)
 
 
-def matches(head: Triple, fact: Triple) -> bool:
-    return all(
-        n1 == n2 or n1 is None or n2 is None
-        for n1, n2 in zip(mask(head), mask(fact), strict=True)
-    )
-
-
-def clauses_depend(clauses: Graph | Variable, other_clauses: Graph | Variable) -> bool:
-    assert isinstance(clauses, Graph)
-    assert isinstance(other_clauses, Graph)
-    for triple1 in clauses:
-        for triple2 in other_clauses:
-            if matches(triple1, triple2):
-                return True
+def node_matches(body_node: Node, head_node: Node) -> bool:
+    if isinstance(body_node, BNode):
+        # BNodes in body are always new
+        return isinstance(head_node, BNode | Variable)
+    if isinstance(body_node, Variable):
+        # TODO: check if this is variable is also in the body's rule head (aka bound)
+        # unbound variables seem to also produce something new
+        return True
+    assert not isinstance(body_node, Graph)
+    assert not isinstance(head_node, Graph)
+    if body_node == head_node:
+        return True
     return False
+
+
+def matches(body_triple: Triple, head_triple: Triple) -> bool:
+    sb, pb, ob = body_triple
+    sh, ph, oh = head_triple
+    return node_matches(sb, sh) and node_matches(pb, ph) and node_matches(ob, oh)
+
+
+def has_bnodes(triple: Triple) -> bool:
+    return any(isinstance(node, BNode) for node in triple)
+
+
+def head_depends_on_body(head_clauses: Graph | Variable, body_clauses: Graph | Variable) -> bool:
+    assert isinstance(head_clauses, Graph)
+    assert isinstance(body_clauses, Graph)
+
+    all_bnodes_match = True
+    for body_triple in body_clauses:
+        bnodes_match = False if has_bnodes(body_triple) else True
+        for head_triple in head_clauses:
+            if matches(body_triple, head_triple):
+                if has_bnodes(body_triple):
+                    bnodes_match = True
+                    break
+                else:
+                    return True
+        if not bnodes_match:
+            all_bnodes_match = False
+    return all_bnodes_match
 
 def head(rule):
     s, p, o = rule
@@ -49,11 +77,19 @@ def body(rule):
         return s
 
 
-def triggering_rules(rule_with_head: Rule, rules_with_body: Graph) -> Iterable[Rule]:
+def triggering_rules(rule_with_body: Rule, rules_with_head: Graph) -> Iterable[Rule]:
     return {
         rule
-        for rule in filter_rules(rules_with_body)
-        if clauses_depend(head(rule_with_head), body(rule))
+        for rule in filter_rules(rules_with_head)
+        if head_depends_on_body(head(rule), body(rule_with_body))
+    }
+
+
+def firing_rules(rule_with_head: Rule, rules_with_body: Graph) -> Iterable[Rule]:
+    return {
+        rule_with_body
+        for rule_with_body in filter_rules(rules_with_body)
+        if head_depends_on_body(head(rule_with_head), body(rule_with_body))
     }
 
 
@@ -84,15 +120,15 @@ def stratify_rule(
     state.index[rule] = state.new_index()
     state.low[rule] = state.index[rule]
     state.stack.append(rule)
-    for trigger in triggering_rules(rule, rules):
-        if trigger not in state.index:
-            yield from stratify_rule(trigger, rules, state)
-            state.low[rule] = min(state.low[rule], state.low[trigger])
-        elif trigger in state.stack:
-            state.low[rule] = min(state.low[trigger], state.index[rule])
+    for firing in firing_rules(rule, rules):
+        if firing not in state.index:
+            yield from stratify_rule(firing, rules, state)
+            state.low[rule] = min(state.low[rule], state.low[firing])
+        elif firing in state.stack:
+            state.low[rule] = min(state.low[firing], state.index[rule])
     if state.low[rule] == state.index[rule]:
         top = None
-        scc = Graph()
+        scc = Graph(namespace_manager=rules.namespace_manager)
         while top != rule:
             top = state.stack.pop()
             scc.add(top)
