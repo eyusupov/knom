@@ -36,7 +36,7 @@ def bind_node(
     elif isinstance(head_node, Graph):
         if not isinstance(fact_node, Graph):
             return
-        yield from match_rule(list(head_node), cast(Graph, fact_node), bindings)
+        yield from match_rule(list(head_node), cast(Graph, fact_node), bindings, set())
     else:
         raise TypeError
 
@@ -76,7 +76,7 @@ def mask(head_clause: Triple, bindings: Bindings | None = None) -> Mask:
 
 
 def match_rule(
-    head: Sequence[Triple], facts: Graph, bindings: Bindings
+    head: Sequence[Triple], facts: Graph, bindings: Bindings, bound: set[Triple],
 ) -> Iterator[Bindings]:
     if len(head) == 0:
         yield bindings
@@ -85,14 +85,16 @@ def match_rule(
         s, p, o = head_clause
         if p in BUILTINS:
             for binding in BUILTINS[p](s, o, bindings.copy()):
-                yield from match_rule(head[1:], facts, binding)
+                yield from match_rule(head[1:], facts, binding, bound)
         else:
             mask_ = mask(head_clause, bindings)
             triples = facts.triples(mask_)
             for fact in triples:
+                if fact in bound:
+                    continue
                 #print("feeding", print_triple(fact, facts.namespace_manager))
                 for binding in bind(head_clause, fact, bindings):
-                    yield from match_rule(head[1:], facts, binding)
+                    yield from match_rule(head[1:], facts, binding, bound.union(fact))
 
 
 def instantiate_bnodes(body: Graph, bindings: Bindings) -> None:
@@ -121,8 +123,7 @@ def assign(triple: Triple, bindings: Bindings) -> Triple:
     )
 
 
-def optimization_order(triple: Triple) -> int:
-    from rdflib import RDF
+def optimization_order(triple: Triple) -> tuple:
     s, p, o = triple
     if p in BUILTINS:
         # Execute builtins last so that everything is bound
@@ -130,18 +131,9 @@ def optimization_order(triple: Triple) -> int:
         # TODO: a hack for grammar parsing experiment
         from knom.builtins import STRING
         if p == STRING.ord:
-            return 1
-        return 0
-    prio = 2
-    if p == RDF.type:
-        prio += 1
-    if isinstance(s, URIRef | Literal):
-        prio += 1
-    if isinstance(p, URIRef | Literal):
-        prio += 1
-    if isinstance(o, URIRef | Literal):
-        prio += 1
-    return prio
+            return (None, None, 1)
+        return (None, None, 0)
+    return (s, p, o)
 
 
 def optimize(head: Graph) -> list[Triple]:
@@ -159,7 +151,7 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
         else:
             continue
         assert isinstance(head, Graph)
-        for bindings in match_rule(optimize(head), facts, {}):
+        for bindings in match_rule(optimize(head), facts, {}, set()):
             if isinstance(body, Variable):
                 g = bindings[body]
                 assert isinstance(g, Graph)
@@ -173,13 +165,11 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
 
 
 def naive_fixpoint(facts: Graph, rules: Graph) -> Iterable[Triple]:
-    inferred = Graph(namespace_manager=facts.namespace_manager)
     feed = Graph()
     for fact in facts:
         feed.add(fact)
     i = 0
     while True:
-        print("fixpoint pass ", i)
         old_len = len(feed)
         for new_triple in single_pass(feed, rules):
             yield new_triple
