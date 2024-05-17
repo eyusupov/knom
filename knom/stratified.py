@@ -29,6 +29,9 @@ def node_depends(body_node: Node, head_node: Node, bnodes: Bindings) -> bool:
         # unbound variables seem to also produce something new
         return True
     if isinstance(head_node, Variable | BNode):
+        # Variable in head cannot match a produced blank node
+        if isinstance(body_node, BNode):
+            return False
         return True
     assert not isinstance(body_node, Graph)
     assert not isinstance(head_node, Graph)
@@ -50,20 +53,26 @@ def clause_dependencies(head: Iterable[Triple] | Variable, body: Iterable[Triple
     assert not isinstance(body, Variable)
 
     complete_head = set(head)
+    complete_body = set(body)
+
     try:
         next(iter(body))
     except StopIteration:
         yield complete_head
 
+    if len(complete_head) == 0 and len(bnodes) > 0:
+        return
+
     body_clauses = set(body)
     while len(body_clauses) > 0:
+        unmatched_body_clauses = set[Triple]()
         body_triple = body_clauses.pop()
         head_clauses = complete_head.copy()
         while len(head_clauses) > 0:
             bnodes_ = bnodes.copy()
             head_triple = head_clauses.pop()
             if depends(body_triple, head_triple, bnodes_):
-                yield from clause_dependencies(complete_head - {head_triple}, body_clauses, bnodes_)
+                yield from clause_dependencies(complete_head - {head_triple}, complete_body - {body_triple}, bnodes_)
 
 
 def head(rule: Triple) -> Node:
@@ -80,7 +89,7 @@ def body(rule: Triple) -> Node:
     return s
 
 
-def head_depends_on_body(head: Iterable[Triple] | Variable, body: Iterable[Triple] | Variable, bnodes: Bindings | None = None) -> bool:
+def head_depends_on_body(head: Iterable[Triple] | Variable, body: Iterable[Triple] | Variable) -> bool:
     try:
         next(iter(clause_dependencies(head, body)))
     except StopIteration:
@@ -89,6 +98,7 @@ def head_depends_on_body(head: Iterable[Triple] | Variable, body: Iterable[Tripl
 
 
 def firing_rules(rule_with_head: Rule, rules_with_body: Graph) -> Iterable[Rule]:
+    # TODO: do we still have logic that clauses with bnodes must fully match?
     return {
         rule_with_body
         for rule_with_body in filter_rules(rules_with_body)
