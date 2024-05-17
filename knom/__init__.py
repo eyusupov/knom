@@ -6,7 +6,7 @@ from rdflib.term import Node
 
 from knom.builtins import BUILTINS
 from knom.typing import Bindings, Mask, Triple
-from knom.util import LOG
+from knom.util import LOG, print_triple
 
 
 def bind_node(
@@ -70,24 +70,44 @@ def mask(head_clause: Triple, bindings: Bindings | None = None) -> Mask:
         mask_node(head_clause[2], bindings),
     )
 
+def head_sort_key(prev_clause, clause, bindings):
+    ps, pp, po = prev_clause
+    s, p, o = clause
+    return (
+        ps == s,
+        pp == p,
+        po == o,
+        sum(1 if node in bindings else 0 for node in clause)
+    )
+
+
+def get_next_head(prev_clause: Triple, head: set[Triple], bindings: Bindings) -> tuple:
+    if head == set():
+        return None, set()
+    next_head = max(head, key=lambda triple: head_sort_key(prev_clause, triple, bindings))
+    remaining = head.copy()
+    remaining.remove(next_head)
+    return next_head, remaining
+
 
 def match_rule(
-    head: Sequence[Triple], facts: Graph, bindings: Bindings
+    head_clause: Triple, head: set[Triple], facts: Graph, bindings: Bindings
 ) -> Iterator[Bindings]:
-    if len(head) == 0:
+    if head_clause == None:
         yield bindings
     else:
-        head_clause = head[0]
         s, p, o = head_clause
         if p in BUILTINS:
             for binding in BUILTINS[p](s, o, bindings.copy()):
-                yield from match_rule(head[1:], facts, binding)
+                next_head, remaining = get_next_head(head_clause, head, bindings)
+                yield from match_rule(next_head, remaining, facts, binding)
         else:
             mask_ = mask(head_clause, bindings)
             triples = facts.triples(mask_)
             for fact in triples:
                 for binding in bind(head_clause, fact, bindings):
-                    yield from match_rule(head[1:], facts, binding)
+                    next_head, remaining = get_next_head(head_clause, head, bindings)
+                    yield from match_rule(next_head, remaining, facts, binding)
 
 
 def instantiate_bnodes(body: Graph, bindings: Bindings) -> None:
@@ -116,23 +136,6 @@ def assign(triple: Triple, bindings: Bindings) -> Triple:
     )
 
 
-def optimization_order(triple: Triple) -> tuple:
-    s, p, o = triple
-    if p in BUILTINS:
-        # Execute builtins last so that everything is bound
-        # TODO: take into account order of variable usage
-        # TODO: a hack for grammar parsing experiment
-        from knom.builtins import STRING
-        if p == STRING.ord:
-            return (None, None, 1)
-        return (None, None, 0)
-    return (s, p, o)
-
-
-def optimize(head: Iterable[Triple]) -> list[Triple]:
-    return sorted(head, key=optimization_order, reverse=True)
-
-
 def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
     for s, p, o in rules:
         if p == LOG.implies:
@@ -144,7 +147,13 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
         else:
             continue
         assert isinstance(head, Graph)
-        for bindings in match_rule(optimize(head), facts, {}):
+        head_ = set(head)
+        if head_ == set():
+            # TODO
+            continue
+            raise NotImplemented
+        print([print_triple(clause) for clause in head_])
+        for bindings in match_rule(head_.pop(), head_, facts, {}):
             if isinstance(body, Variable):
                 g = bindings[body]
                 assert isinstance(g, Graph)
@@ -154,6 +163,7 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
                 assert isinstance(body, Graph)
                 instantiate_bnodes(body, bindings)
                 for triple in body:
+                    print('inferred')
                     yield assign(triple, bindings)
 
 

@@ -1,0 +1,18 @@
+@prefix log: <http://www.w3.org/2000/10/swap/log#> .
+@prefix p: <http://example.com/parser#> .
+@prefix test: <http://example.com/test#> .
+
+{
+  [] a p:Repeat_a_1 ;
+      p:end ?c ;
+      p:start ?a .
+} log:impliedBy {
+  [] a p:Repeat_a_1 ;
+      p:end ?c ;
+      p:start ?b .
+
+  [] a test:C ;
+      p:end ?b ;
+      p:start ?a .
+}.
+

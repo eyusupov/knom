@@ -5,8 +5,9 @@ from rdflib import BNode, Graph, URIRef, Variable
 from rdflib.graph import QuotedGraph
 from rdflib.term import Node
 
-from knom import LOG, single_pass, optimize, match_rule
+from knom import LOG, single_pass, match_rule, assign, instantiate_bnodes
 from knom.typing import Triple, Bindings
+from knom.util import print_rule
 
 Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
 RuleIndex = dict[Rule, int]
@@ -156,35 +157,42 @@ def stratify_rules(rules: Graph) -> Iterable[Graph]:
 
 
 def with_guard(facts: Graph, rules: Iterable[Triple]) -> Iterable[Triple]:
-    it = iter(rules)
-    rule = next(it)
-    try:
-        next(it)
-    except StopIteration:
-        pass
-    else:
-        raise NotImplementedError
-    deps = set(clause_dependencies(head(rule), body(rule)))
-    if len(deps) > 1:
-        raise NotImplementedError
-
-    # Oblivious chase, we will provide some extra bnodes, but it's ok.
-    for _ in match_rule(optimize(list(deps.pop())), facts, {}):
-        yield from single_pass(facts, rules)
+    # TODO: the rules depend on each other, so we need to make sure
+    # that each one has been executed after the one it depends on for each
+    # element picked by a guard clause. Will it be enough? In what cases?
+    print("executing with guard")
+    for rule in rules:
+        body_ = body(rule)
+        deps = set(clause_dependencies(head(rule), body_))
+        if len(deps) > 1:
+            raise NotImplementedError
+        if len(deps) == 0:
+            yield from single_pass(facts, rules)
+        else:
+            guard = set(deps.pop())
+            assert len(guard) > 0
+            removed_facts = set()
+            for bindings in match_rule(guard.pop(), guard, facts, {}):
+                for triple in guard:
+                    fact = assign(triple, bindings)
+                    facts.remove(fact)
+                    removed_facts.add(fact)
+                instantiate_bnodes(body_, bindings)
+                for triple in body_:
+                    yield assign(triple, bindings)
+            for fact in removed_facts:
+                facts.add(fact)
 
 
 def stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
-    from knom.util import print_rule
-    print("stratifying rules")
     stratas = stratify_rules(rules)
-    print("done")
     feed = Graph()
     for triple in facts:
         feed.add(triple)
     for i, strata in enumerate(stratas):
-        print("strata", i, len(strata))
+        print("strata start", i, len(strata))
         rule = next(iter(strata))
-        print(print_rule(rule))
+        print(strata.serialize(format='n3'))
         recursive = len(strata) > 1 or head_depends_on_body(head(rule), body(rule))
         method = with_guard if recursive else single_pass
         for new_tuple in method(feed, strata):
