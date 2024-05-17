@@ -6,7 +6,7 @@ from rdflib.graph import QuotedGraph
 from rdflib.term import Node
 
 from knom import LOG, single_pass
-from knom.typing import Triple
+from knom.typing import Triple, Bindings
 
 Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
 RuleIndex = dict[Rule, int]
@@ -17,12 +17,18 @@ def filter_rules(g: Graph) -> Iterable[Rule]:
         yield cast(Rule, triple)
 
 
-def node_depends(body_node: Node, head_node: Node) -> bool:
+def node_depends(body_node: Node, head_node: Node, bnodes: Bindings) -> bool:
     if isinstance(body_node, BNode):
-        return isinstance(head_node, BNode | Variable)
+        if isinstance(head_node, BNode):
+            if body_node not in bnodes:
+                bnodes[body_node] = head_node
+            return bnodes[body_node] == head_node
+        return True
     if isinstance(body_node, Variable):
         # TODO: check if this is variable is also in the body's rule head (aka bound)
         # unbound variables seem to also produce something new
+        return True
+    if isinstance(head_node, Variable | BNode):
         return True
     assert not isinstance(body_node, Graph)
     assert not isinstance(head_node, Graph)
@@ -31,33 +37,36 @@ def node_depends(body_node: Node, head_node: Node) -> bool:
     return False
 
 
-def depends(body_triple: Triple, head_triple: Triple) -> bool:
-    sb, pb, ob = body_triple
-    sh, ph, oh = head_triple
-    return node_depends(sb, sh) and node_depends(pb, ph) and node_depends(ob, oh)
+def depends(body_triple: Triple, head_triple: Triple, bnodes: Bindings) -> bool:
+    return all(node_depends(nb, nh, bnodes) for nb, nh in zip(body_triple, head_triple, strict=True))
 
 
-def has_bnodes(triple: Triple) -> bool:
-    return any(isinstance(node, BNode) for node in triple)
+def head_depends_on_body(head: Iterable[Triple] | Variable, body: Iterable[Triple] | Variable) -> tuple[bool, set[Triple]]:
+    # something => body
+    # head => something2
+    assert not isinstance(head, Variable)
+    assert not isinstance(body, Variable)
 
+    head_clauses = list(head)
+    body_clauses = list(body)
 
-def head_depends_on_body(head_clauses: Graph | Variable, body_clauses: Graph | Variable) -> bool:
-    assert isinstance(head_clauses, Graph)
-    assert isinstance(body_clauses, Graph)
+    result = False
 
+    bnodes: Bindings = {}
+    # TODO: this could be order dependent because of the way the bnodes might bind to each other
+    # Add test for this
     for body_triple in body_clauses:
-        bnodes_match = not has_bnodes(body_triple)
-        for head_triple in head_clauses:
-            if depends(body_triple, head_triple):
-                if has_bnodes(body_triple):
-                    # BNodes in the body always produce new variables,
-                    # so for them other rules can't provide missing triples
-                    bnodes_match = True
-                    break
-                return True
-        if not bnodes_match:
-            return False
-    return True
+        for head_triple in (head_clauses):
+            if depends(body_triple, head_triple, bnodes):
+                head_clauses.remove(head_triple)
+                body_clauses.remove(body_triple)
+                result = True
+
+    if any(isinstance(node, BNode) for triples in body_clauses for node in triples):
+        result = False
+
+    return result, set(head_clauses)
+
 
 def head(rule: Triple) -> Node:
     s, p, o = rule
@@ -77,7 +86,7 @@ def triggering_rules(rule_with_body: Rule, rules_with_head: Graph) -> Iterable[R
     return {
         rule
         for rule in filter_rules(rules_with_head)
-        if head_depends_on_body(head(rule), body(rule_with_body))
+        if head_depends_on_body(head(rule), body(rule_with_body))[0]
     }
 
 
@@ -85,7 +94,7 @@ def firing_rules(rule_with_head: Rule, rules_with_body: Graph) -> Iterable[Rule]
     return {
         rule_with_body
         for rule_with_body in filter_rules(rules_with_body)
-        if head_depends_on_body(head(rule_with_head), body(rule_with_body))
+        if head_depends_on_body(head(rule_with_head), body(rule_with_body))[0]
     }
 
 
@@ -140,13 +149,32 @@ def stratify_rules(rules: Graph) -> Iterable[Graph]:
     return stratified_rules
 
 
+def with_guard(facts: Graph, rules: Iterable[Triple]) -> Iterable[Triple]:
+    for rule in rules:
+        # Guard clauses are non-recursive clauses in the rule (clauses of the head that do not depened on the body)
+        guard = []
+        for head_clause in head(rule):
+            dep = False
+            for body_clause in body(rule):
+                if depends(body_clause, head_clause):
+                    dep = True
+                    break
+            if not dep:
+                guard.append(head_clause)
+        __import__('ipdb').set_trace()
+        # We use them to limit recursion
+
+
 def stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
     stratas = stratify_rules(rules)
     feed = Graph()
     for triple in facts:
         feed.add(triple)
     for i, strata in enumerate(stratas):
-        print("pass ", i)
-        for new_tuple in single_pass(feed, strata):
+        print("strata", i)
+        rule = next(iter(strata))
+        recursive = len(strata) > 1 or head_depends_on_body(head(rule), body(rule))[0]
+        method = with_guard if recursive else single_pass
+        for new_tuple in method(feed, strata):
             yield new_tuple
             feed.add(new_tuple)

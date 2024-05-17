@@ -27,6 +27,7 @@ varc_triple = (lit_a, lit_b, var_c)
 
 bna_triple = (bn_a, lit_b, lit_c)
 bnb_triple = (lit_a, bn_b, lit_c)
+bnb_triple2 = (bn_b, lit_b, lit_c)
 bnc_triple = (lit_a, lit_b, bn_c)
 
 lit_graph = Graph().add(lit_triple)

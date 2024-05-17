@@ -173,19 +173,18 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
                     yield assign(triple, bindings_)
 
 
-def naive_fixpoint(facts: Graph, rules: Graph) -> Graph:
+def naive_fixpoint(facts: Graph, rules: Graph) -> Iterable[Triple]:
     inferred = Graph(namespace_manager=facts.namespace_manager)
     feed = Graph()
     for fact in facts:
         feed.add(fact)
-    i = 1
+    i = 0
     while True:
-        old_inferred = len(inferred)
-        print("pass ", i)
+        print("fixpoint pass ", i)
+        old_len = len(feed)
         for new_triple in single_pass(feed, rules):
-            inferred.add(new_triple)
+            yield new_triple
             feed.add(new_triple)
-        if len(inferred) == old_inferred:
+        if len(feed) == old_len:
             break
         i += 1
-    return inferred
