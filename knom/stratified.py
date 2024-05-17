@@ -5,7 +5,7 @@ from rdflib import BNode, Graph, URIRef, Variable
 from rdflib.graph import QuotedGraph
 from rdflib.term import Node
 
-from knom import LOG, single_pass
+from knom import LOG, single_pass, optimize, match_rule
 from knom.typing import Triple, Bindings
 
 Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
@@ -156,16 +156,22 @@ def stratify_rules(rules: Graph) -> Iterable[Graph]:
 
 
 def with_guard(facts: Graph, rules: Iterable[Triple]) -> Iterable[Triple]:
-    if len(rules) > 1:
+    it = iter(rules)
+    rule = next(it)
+    try:
+        next(it)
+    except StopIteration:
+        pass
+    else:
         raise NotImplementedError
-    for rule in rules:
-        # Guard clauses are non-recursive clauses in the rule
-        # (clauses of the head that do not depened on the body)
-        # We use them to limit recursion
-        deps = set(clause_dependencies(head(rule), body(rule)))
-        if len(deps) > 1:
-            raise NotImplementedError
-    return ()
+    deps = set(clause_dependencies(head(rule), body(rule)))
+    if len(deps) > 1:
+        raise NotImplementedError
+
+    # Oblivious chase, we will provide some extra bnodes, but it's ok.
+    for _ in match_rule(optimize(list(deps.pop())), facts, {}):
+        yield from single_pass(facts, rules)
+
 
 def stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
     from knom.util import print_rule

@@ -86,7 +86,6 @@ def match_rule(
             mask_ = mask(head_clause, bindings)
             triples = facts.triples(mask_)
             for fact in triples:
-                #print("feeding", print_triple(fact, facts.namespace_manager))
                 for binding in bind(head_clause, fact, bindings):
                     yield from match_rule(head[1:], facts, binding)
 
@@ -130,7 +129,7 @@ def optimization_order(triple: Triple) -> tuple:
     return (s, p, o)
 
 
-def optimize(head: Graph) -> list[Triple]:
+def optimize(head: Iterable[Triple]) -> list[Triple]:
     return sorted(head, key=optimization_order, reverse=True)
 
 
