@@ -28,13 +28,18 @@ def not_greater_than(s: Node, o: Node, bindings: Bindings) -> Iterator[Bindings]
 
 
 def ord_(s: Node, o: Node, bindings: Bindings) -> Iterator[Bindings]:
-    if isinstance(s, Literal):
+    if isinstance(s, Literal) or s in bindings:
+        s_ = bindings[s] if isinstance(s, Variable | BNode) else s
         if isinstance(o, Variable | BNode):
-            assert isinstance(s, Literal)
+            assert isinstance(s_, Literal)
             if o in bindings:
-                return chr(s.value) == bindings[o].value
+                if chr(s.value) == bindings[o].value:
+                    yield bindings
+                    return
             else:
                 bindings[o] = Literal(chr(s.value))
+                yield bindings
+                return
     o_ = bindings[o] if isinstance(o, Variable | BNode) else o
     assert isinstance(o_, Literal)
     val = Literal(ord(o_.value))

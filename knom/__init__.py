@@ -29,14 +29,14 @@ def bind_node(
             if head_node != fact_node:
                 return
             yield bindings
-        new_bindings = bindings.copy()
-        new_bindings[head_node] = fact_node
-        yield new_bindings
+        else:
+            new_bindings = bindings.copy()
+            new_bindings[head_node] = fact_node
+            yield new_bindings
     elif isinstance(head_node, Graph):
         if not isinstance(fact_node, Graph):
             return
-        new_bindings = bindings.copy()
-        yield from match_rule(list(head_node), cast(Graph, fact_node), new_bindings)
+        yield from match_rule(list(head_node), cast(Graph, fact_node), bindings)
     else:
         raise TypeError
 
@@ -91,8 +91,7 @@ def match_rule(
             triples = facts.triples(mask_)
             for fact in triples:
                 #print("feeding", print_triple(fact, facts.namespace_manager))
-                new_bindings = bindings.copy()
-                for binding in bind(head_clause, fact, new_bindings):
+                for binding in bind(head_clause, fact, bindings):
                     yield from match_rule(head[1:], facts, binding)
 
 
@@ -125,7 +124,15 @@ def assign(triple: Triple, bindings: Bindings) -> Triple:
 def optimization_order(triple: Triple) -> int:
     from rdflib import RDF
     s, p, o = triple
-    prio = 0
+    if p in BUILTINS:
+        # Execute builtins last so that everything is bound
+        # TODO: take into account order of variable usage
+        # TODO: a hack for grammar parsing experiment
+        from knom.builtins import STRING
+        if p == STRING.ord:
+            return 1
+        return 0
+    prio = 2
     if p == RDF.type:
         prio += 1
     if isinstance(s, URIRef | Literal):
@@ -134,17 +141,10 @@ def optimization_order(triple: Triple) -> int:
         prio += 1
     if isinstance(o, URIRef | Literal):
         prio += 1
-    if p in BUILTINS:
-        # Execute builtins last so that everything is bound
-        prio = 0
     return prio
 
 
-
 def optimize(head: Graph) -> list[Triple]:
-    # TODO:
-    # take into account order of variable usage? and also it's not just an optimization anymore
-    # due to builtins priority
     return sorted(head, key=optimization_order, reverse=True)
 
 
@@ -167,10 +167,9 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
                     yield triple
             else:
                 assert isinstance(body, Graph)
-                bindings_ = bindings.copy()
-                instantiate_bnodes(body, bindings_)
+                instantiate_bnodes(body, bindings)
                 for triple in body:
-                    yield assign(triple, bindings_)
+                    yield assign(triple, bindings)
 
 
 def naive_fixpoint(facts: Graph, rules: Graph) -> Iterable[Triple]:
