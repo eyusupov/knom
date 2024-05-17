@@ -41,31 +41,30 @@ def depends(body_triple: Triple, head_triple: Triple, bnodes: Bindings) -> bool:
     return all(node_depends(nb, nh, bnodes) for nb, nh in zip(body_triple, head_triple, strict=True))
 
 
-def head_depends_on_body(head: Iterable[Triple] | Variable, body: Iterable[Triple] | Variable) -> tuple[bool, set[Triple]]:
+def head_depends_on_body(head: Iterable[Triple] | Variable, body: Iterable[Triple] | Variable, bnodes: Bindings | None = None) -> Iterable[set[Triple]]:
+    if bnodes is None:
+        bnodes = {}
     # something => body
     # head => something2
     assert not isinstance(head, Variable)
     assert not isinstance(body, Variable)
 
-    head_clauses = list(head)
-    body_clauses = list(body)
+    complete_head = set(head)
+    try:
+        next(iter(body))
+    except StopIteration:
+        yield complete_head
 
-    result = False
+    body_clauses = set(body)
+    while len(body_clauses) > 0:
+        body_triple = body_clauses.pop()
+        head_clauses = complete_head.copy()
+        while len(head_clauses) > 0:
+            bnodes_ = bnodes.copy()
+            head_triple = head_clauses.pop()
+            if depends(body_triple, head_triple, bnodes_):
+                yield from head_depends_on_body(complete_head - {head_triple}, body_clauses, bnodes_)
 
-    bnodes: Bindings = {}
-    # TODO: this could be order dependent because of the way the bnodes might bind to each other
-    # Add test for this
-    for body_triple in body_clauses:
-        for head_triple in (head_clauses):
-            if depends(body_triple, head_triple, bnodes):
-                head_clauses.remove(head_triple)
-                body_clauses.remove(body_triple)
-                result = True
-
-    if any(isinstance(node, BNode) for triples in body_clauses for node in triples):
-        result = False
-
-    return result, set(head_clauses)
 
 
 def head(rule: Triple) -> Node:
