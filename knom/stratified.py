@@ -41,7 +41,7 @@ def depends(body_triple: Triple, head_triple: Triple, bnodes: Bindings) -> bool:
     return all(node_depends(nb, nh, bnodes) for nb, nh in zip(body_triple, head_triple, strict=True))
 
 
-def head_depends_on_body(head: Iterable[Triple] | Variable, body: Iterable[Triple] | Variable, bnodes: Bindings | None = None) -> Iterable[set[Triple]]:
+def clause_dependencies(head: Iterable[Triple] | Variable, body: Iterable[Triple] | Variable, bnodes: Bindings | None = None) -> Iterable[set[Triple]]:
     if bnodes is None:
         bnodes = {}
     # something => body
@@ -63,8 +63,7 @@ def head_depends_on_body(head: Iterable[Triple] | Variable, body: Iterable[Tripl
             bnodes_ = bnodes.copy()
             head_triple = head_clauses.pop()
             if depends(body_triple, head_triple, bnodes_):
-                yield from head_depends_on_body(complete_head - {head_triple}, body_clauses, bnodes_)
-
+                yield from clause_dependencies(complete_head - {head_triple}, body_clauses, bnodes_)
 
 
 def head(rule: Triple) -> Node:
@@ -81,19 +80,19 @@ def body(rule: Triple) -> Node:
     return s
 
 
-def triggering_rules(rule_with_body: Rule, rules_with_head: Graph) -> Iterable[Rule]:
-    return {
-        rule
-        for rule in filter_rules(rules_with_head)
-        if head_depends_on_body(head(rule), body(rule_with_body))[0]
-    }
+def head_depends_on_body(head: Iterable[Triple] | Variable, body: Iterable[Triple] | Variable, bnodes: Bindings | None = None) -> bool:
+    try:
+        next(iter(clause_dependencies(head, body)))
+    except StopIteration:
+        return False
+    return True
 
 
 def firing_rules(rule_with_head: Rule, rules_with_body: Graph) -> Iterable[Rule]:
     return {
         rule_with_body
         for rule_with_body in filter_rules(rules_with_body)
-        if head_depends_on_body(head(rule_with_head), body(rule_with_body))[0]
+        if head_depends_on_body(head(rule_with_head), body(rule_with_body))
     }
 
 
