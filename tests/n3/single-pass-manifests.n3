@@ -135,4 +135,9 @@
       mf:action <builtins/string-ord-compare.n3>;
       mf:result <builtins/string-ord-compare-ref.n3>;
     ]
+    [
+      mf:name "string:ord builtin, char output";
+      mf:action <builtins/string-ord-char-output.n3>;
+      mf:result <builtins/string-ord-char-output-ref.n3>;
+    ]
   ).
