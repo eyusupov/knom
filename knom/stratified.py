@@ -44,7 +44,7 @@ def depends(body_triple: Triple, head_triple: Triple, bnodes: Bindings) -> bool:
     return all(node_depends(nb, nh, bnodes) for nb, nh in zip(body_triple, head_triple, strict=True))
 
 
-def clause_dependencies(head: Iterable[Triple] | Variable, body: Iterable[Triple] | Variable, bnodes: Bindings | None = None) -> Iterable[set[Triple]]:
+def clause_dependencies(head: Iterable[Triple] | Variable, body: Iterable[Triple] | Variable, bnodes: Bindings | None = None) -> Iterable[frozenset[Triple]]:
     if bnodes is None:
         bnodes = {}
     # something => body
@@ -52,8 +52,8 @@ def clause_dependencies(head: Iterable[Triple] | Variable, body: Iterable[Triple
     assert not isinstance(head, Variable)
     assert not isinstance(body, Variable)
 
-    complete_head = set(head)
-    complete_body = set(body)
+    complete_head = frozenset(head)
+    complete_body = frozenset(body)
 
     try:
         next(iter(body))
@@ -65,9 +65,8 @@ def clause_dependencies(head: Iterable[Triple] | Variable, body: Iterable[Triple
 
     body_clauses = set(body)
     while len(body_clauses) > 0:
-        unmatched_body_clauses = set[Triple]()
         body_triple = body_clauses.pop()
-        head_clauses = complete_head.copy()
+        head_clauses = set(complete_head)
         while len(head_clauses) > 0:
             bnodes_ = bnodes.copy()
             head_triple = head_clauses.pop()
@@ -98,7 +97,6 @@ def head_depends_on_body(head: Iterable[Triple] | Variable, body: Iterable[Tripl
 
 
 def firing_rules(rule_with_head: Rule, rules_with_body: Graph) -> Iterable[Rule]:
-    # TODO: do we still have logic that clauses with bnodes must fully match?
     return {
         rule_with_body
         for rule_with_body in filter_rules(rules_with_body)
@@ -158,30 +156,30 @@ def stratify_rules(rules: Graph) -> Iterable[Graph]:
 
 
 def with_guard(facts: Graph, rules: Iterable[Triple]) -> Iterable[Triple]:
+    if len(rules) > 1:
+        raise NotImplementedError
     for rule in rules:
-        # Guard clauses are non-recursive clauses in the rule (clauses of the head that do not depened on the body)
-        guard = []
-        for head_clause in head(rule):
-            dep = False
-            for body_clause in body(rule):
-                if depends(body_clause, head_clause):
-                    dep = True
-                    break
-            if not dep:
-                guard.append(head_clause)
-        __import__('ipdb').set_trace()
+        # Guard clauses are non-recursive clauses in the rule
+        # (clauses of the head that do not depened on the body)
         # We use them to limit recursion
-
+        deps = set(clause_dependencies(head(rule), body(rule)))
+        if len(deps) > 1:
+            raise NotImplementedError
+    return ()
 
 def stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
+    from knom.util import print_rule
+    print("stratifying rules")
     stratas = stratify_rules(rules)
+    print("done")
     feed = Graph()
     for triple in facts:
         feed.add(triple)
     for i, strata in enumerate(stratas):
-        print("strata", i)
+        print("strata", i, len(strata))
         rule = next(iter(strata))
-        recursive = len(strata) > 1 or head_depends_on_body(head(rule), body(rule))[0]
+        print(print_rule(rule))
+        recursive = len(strata) > 1 or head_depends_on_body(head(rule), body(rule))
         method = with_guard if recursive else single_pass
         for new_tuple in method(feed, strata):
             yield new_tuple
