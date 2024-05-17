@@ -13,12 +13,10 @@ def bind_node(
     head_node: Node,
     fact_node: Node,
     bindings: Bindings | None = None,
-    *,
-    match_mode: bool = False,
 ) -> Iterator[Bindings]:
     if bindings is None:
         bindings = {}
-    if isinstance(fact_node, Variable) and not match_mode:
+    if isinstance(fact_node, Variable):
         return
     if isinstance(head_node, URIRef | Literal):
         if head_node != fact_node:
@@ -36,7 +34,7 @@ def bind_node(
     elif isinstance(head_node, Graph):
         if not isinstance(fact_node, Graph):
             return
-        yield from match_rule(list(head_node), cast(Graph, fact_node), bindings, set())
+        yield from match_rule(list(head_node), cast(Graph, fact_node), bindings)
     else:
         raise TypeError
 
@@ -45,15 +43,13 @@ def bind(
     head_clause: Triple,
     fact: Triple,
     bindings: Bindings | None = None,
-    *,
-    match_mode: bool = False,
 ) -> Iterator[Bindings]:
     s, p, o = head_clause
     if bindings is None:
         bindings = {}
-    for s_binding in bind_node(s, fact[0], bindings, match_mode=match_mode):
-        for p_binding in bind_node(p, fact[1], s_binding, match_mode=match_mode):
-            yield from bind_node(o, fact[2], p_binding, match_mode=match_mode)
+    for s_binding in bind_node(s, fact[0], bindings):
+        for p_binding in bind_node(p, fact[1], s_binding):
+            yield from bind_node(o, fact[2], p_binding)
 
 
 def mask_node(node: Node, bindings: Bindings) -> Node | None:
@@ -76,7 +72,7 @@ def mask(head_clause: Triple, bindings: Bindings | None = None) -> Mask:
 
 
 def match_rule(
-    head: Sequence[Triple], facts: Graph, bindings: Bindings, bound: set[Triple],
+    head: Sequence[Triple], facts: Graph, bindings: Bindings
 ) -> Iterator[Bindings]:
     if len(head) == 0:
         yield bindings
@@ -85,16 +81,14 @@ def match_rule(
         s, p, o = head_clause
         if p in BUILTINS:
             for binding in BUILTINS[p](s, o, bindings.copy()):
-                yield from match_rule(head[1:], facts, binding, bound)
+                yield from match_rule(head[1:], facts, binding)
         else:
             mask_ = mask(head_clause, bindings)
             triples = facts.triples(mask_)
             for fact in triples:
-                if fact in bound:
-                    continue
                 #print("feeding", print_triple(fact, facts.namespace_manager))
                 for binding in bind(head_clause, fact, bindings):
-                    yield from match_rule(head[1:], facts, binding, bound.union(fact))
+                    yield from match_rule(head[1:], facts, binding)
 
 
 def instantiate_bnodes(body: Graph, bindings: Bindings) -> None:
@@ -151,7 +145,7 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
         else:
             continue
         assert isinstance(head, Graph)
-        for bindings in match_rule(optimize(head), facts, {}, set()):
+        for bindings in match_rule(optimize(head), facts, {}):
             if isinstance(body, Variable):
                 g = bindings[body]
                 assert isinstance(g, Graph)
