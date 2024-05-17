@@ -17,9 +17,8 @@ def filter_rules(g: Graph) -> Iterable[Rule]:
         yield cast(Rule, triple)
 
 
-def node_matches(body_node: Node, head_node: Node) -> bool:
+def node_depends(body_node: Node, head_node: Node) -> bool:
     if isinstance(body_node, BNode):
-        # BNodes in body are always new
         return isinstance(head_node, BNode | Variable)
     if isinstance(body_node, Variable):
         # TODO: check if this is variable is also in the body's rule head (aka bound)
@@ -32,10 +31,10 @@ def node_matches(body_node: Node, head_node: Node) -> bool:
     return False
 
 
-def matches(body_triple: Triple, head_triple: Triple) -> bool:
+def depends(body_triple: Triple, head_triple: Triple) -> bool:
     sb, pb, ob = body_triple
     sh, ph, oh = head_triple
-    return node_matches(sb, sh) and node_matches(pb, ph) and node_matches(ob, oh)
+    return node_depends(sb, sh) and node_depends(pb, ph) and node_depends(ob, oh)
 
 
 def has_bnodes(triple: Triple) -> bool:
@@ -49,7 +48,7 @@ def head_depends_on_body(head_clauses: Graph | Variable, body_clauses: Graph | V
     for body_triple in body_clauses:
         bnodes_match = not has_bnodes(body_triple)
         for head_triple in head_clauses:
-            if matches(body_triple, head_triple):
+            if depends(body_triple, head_triple):
                 if has_bnodes(body_triple):
                     # BNodes in the body always produce new variables,
                     # so for them other rules can't provide missing triples
