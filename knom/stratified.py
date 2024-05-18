@@ -19,6 +19,7 @@ from knom.typing import Bindings, Triple
 Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
 RuleIndex = dict[Rule, int]
 
+NEGATION_PREDICATE = LOG.notIncludes
 
 def filter_rules(g: Graph) -> Graph:
     rules = Graph()
