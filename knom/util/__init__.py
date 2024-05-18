@@ -13,11 +13,15 @@ def node_repr(node: Node | None, namespace_manager: NamespaceManager | None = No
         return "_"
     if isinstance(node, URIRef | Literal | BNode):
         return node.n3(namespace_manager=namespace_manager)
+    if isinstance(node, Graph):
+        return print_graph(node)
     assert isinstance(node, Variable)
     return node.toPython()
 
 
 def print_triple(triple: Triple, namespace_manager: NamespaceManager | None = None) -> str:
+    if isinstance(triple, Graph):
+        return print_graph(triple)
     return ", ".join([node_repr(c, namespace_manager=namespace_manager) for c in triple])
 
 

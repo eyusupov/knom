@@ -34,7 +34,8 @@ def bind_node(
     elif isinstance(head_node, Graph):
         if not isinstance(fact_node, Graph):
             return
-        yield from match_rule(list(head_node), cast(Graph, fact_node), bindings)
+        head = set(head_node)
+        yield from match_rule(head.pop(), head, cast(Graph, fact_node), bindings)
     else:
         raise TypeError
 
@@ -82,6 +83,7 @@ def head_sort_key(prev_clause, clause, bindings):
 
 
 def get_next_head(prev_clause: Triple, head: set[Triple], bindings: Bindings) -> tuple:
+    # TODO: fix hex char range handling (builtins results are used in other builtins)
     if head == set():
         return None, set()
     next_head = max(head, key=lambda triple: head_sort_key(prev_clause, triple, bindings))
@@ -149,9 +151,9 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
         assert isinstance(head, Graph)
         head_ = set(head)
         if head_ == set():
-            # TODO
+            # TODO: always true? produce a single fact seems like a correct way
+            # raise NotImplemented
             continue
-            raise NotImplemented
         print([print_triple(clause) for clause in head_])
         for bindings in match_rule(head_.pop(), head_, facts, {}):
             if isinstance(body, Variable):
