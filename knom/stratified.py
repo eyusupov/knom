@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from itertools import chain
 
 from rdflib import BNode, Graph, URIRef, Variable
 from rdflib.graph import QuotedGraph, ConjunctiveGraph
@@ -127,17 +128,19 @@ def head_depends_on_body(
     return True
 
 
-def firing_rules(rule_with_head: Rule, rules_with_body: Graph) -> set[Rule]:
+def firing_rules(rule_with_head: Rule, rules_with_body: Graph, cg: ConjunctiveGraph) -> set[Rule]:
     head_ = head(rule_with_head)
+
     result = set()
     for head_clause in head_:
-        result.update(
-            {
-                rule_with_body
-                for rule_with_body in rules_with_body.triples(mask(head_clause))
-                if head_depends_on_body(head_, body(rule_with_body))
-            }
-        )
+        for _, _, _, formula in cg.quads(mask(head_clause)):
+            filtered_rules = chain(
+                rules_with_body.triples((None, LOG.implies, formula)),
+                rules_with_body.triples((formula, LOG.impliedBy, None))
+            )
+            for rule_with_body in filtered_rules:
+                if head_depends_on_body(head_, body(rule_with_body)):
+                    result.add(rule_with_body)
     return result
 
 
@@ -191,8 +194,15 @@ def stratify_rules(rules: Graph) -> Iterable[Graph]:
 
     rules_dependencies: dict[Rule, set[Rule]] = {}
 
+    cg = ConjunctiveGraph()
+    for s, _, o in rules:
+        for node in s, o:
+            if isinstance(node, Graph):
+                for triple in node:
+                    cg.add((*triple, node))
+
     for rule in rules:
-        rules_dependencies[rule] = firing_rules(rule, rules)
+        rules_dependencies[rule] = firing_rules(rule, rules, cg)
 
     for rule in rules:
         if rule not in state.index:
