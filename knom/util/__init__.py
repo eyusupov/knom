@@ -1,3 +1,6 @@
+from collections.abc import Iterable
+from typing import Any
+
 from rdflib import BNode, Graph, Literal, Namespace, URIRef, Variable
 from rdflib.namespace import NamespaceManager
 from rdflib.term import Node
@@ -5,6 +8,16 @@ from rdflib.term import Node
 from knom.typing import Triple
 
 LOG = Namespace("http://www.w3.org/2000/10/swap/log#")
+
+
+def only_one(some: Iterable) -> Any:  # noqa: ANN401
+    iter_ = iter(some)
+    value = next(iter_)
+    try:
+        next(iter_)
+    except StopIteration:
+        return value
+    raise AssertionError
 
 
 def node_repr(

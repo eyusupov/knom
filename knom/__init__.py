@@ -9,6 +9,30 @@ from knom.typing import Bindings, Mask, Triple
 from knom.util import LOG
 
 
+def get_head(rule: Triple) -> Variable | Graph:
+    s, p, o = rule
+    if p == LOG.implies:
+        body_ = s
+    elif p == LOG.impliedBy:
+        body_ = o
+    else:
+        raise AssertionError
+    assert isinstance(body_, Variable | Graph)
+    return body_
+
+
+def get_body(rule: Triple) -> Variable | Graph:
+    s, p, o = rule
+    if p == LOG.implies:
+        body_ = o
+    elif p == LOG.impliedBy:
+        body_ = s
+    else:
+        raise AssertionError
+    assert isinstance(body_, Variable | Graph)
+    return body_
+
+
 def bind_node(
     head_node: Node,
     fact_node: Node,
@@ -151,31 +175,31 @@ def assign(triple: Triple, bindings: Bindings) -> Triple:
     )
 
 
+def fire_rule(rule: Triple, bindings: Bindings) -> Iterator[Triple]:
+    body = get_body(rule)
+    if isinstance(body, Variable):
+        g = bindings[body]
+        assert isinstance(g, Graph)
+        for triple in g:
+            yield triple
+    else:
+        assert isinstance(body, Graph)
+        instantiate_bnodes(body, bindings)
+        for triple in body:
+            yield assign(triple, bindings)
+
+
+def single_rule(facts: Graph, rule: Triple) -> Iterator[Triple]:
+    head_graph = get_head(rule)
+    assert isinstance(head_graph, Graph)
+    head = set(head_graph)
+    if head == set():
+        yield from cast(Graph, get_body(rule))
+    next_head, remaining = get_next_head((None, None, None), head, {})
+    for bindings in match_rule(next_head, remaining, facts, {}):
+        yield from fire_rule(rule, bindings)
+
+
 def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
-    for s, p, o in rules:
-        if p == LOG.implies:
-            head = s
-            body = o
-        elif p == LOG.impliedBy:
-            head = o
-            body = s
-        else:
-            continue
-        assert isinstance(head, Graph)
-        head_ = set(head)
-        if head_ == set():
-            # TODO: always true? produce a single fact seems like a correct way
-            # raise NotImplemented
-            continue
-        next_head, remaining = get_next_head((None, None, None), head_, {})
-        for bindings in match_rule(next_head, remaining, facts, {}):
-            if isinstance(body, Variable):
-                g = bindings[body]
-                assert isinstance(g, Graph)
-                for triple in g:
-                    yield triple
-            else:
-                assert isinstance(body, Graph)
-                instantiate_bnodes(body, bindings)
-                for triple in body:
-                    yield assign(triple, bindings)
+    for rule in rules:
+        yield from single_rule(facts, rule)
