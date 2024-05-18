@@ -179,18 +179,3 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
                 instantiate_bnodes(body, bindings)
                 for triple in body:
                     yield assign(triple, bindings)
-
-
-def naive_fixpoint(facts: Graph, rules: Graph) -> Iterable[Triple]:
-    feed = Graph()
-    for fact in facts:
-        feed.add(fact)
-    i = 0
-    while True:
-        old_len = len(feed)
-        for new_triple in single_pass(feed, rules):
-            yield new_triple
-            feed.add(new_triple)
-        if len(feed) == old_len:
-            break
-        i += 1

@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 
 from rdflib import BNode, Graph, URIRef, Variable
-from rdflib.graph import QuotedGraph
+from rdflib.graph import QuotedGraph, ConjunctiveGraph
 from rdflib.namespace import NamespaceManager
 from rdflib.term import Node
 
@@ -229,17 +229,17 @@ def with_guard(facts: Graph, rules: Iterable[Triple]) -> Iterable[Triple]:
                 facts.add(fact)
 
 
-def stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
+def stratified(facts: Graph, rules: Graph) -> Graph:
     stratas = stratify_rules(rules)
-    feed = Graph()
-    for triple in facts:
-        feed.add(triple)
+    closure = ConjunctiveGraph()
+    closure += facts
+    inferred = Graph(store=closure.store)
     for i, strata in enumerate(stratas):
         print("strata start", i, len(strata))
         print(strata.serialize(format="n3"))
         rule = next(iter(strata))
         recursive = len(strata) > 1 or head_depends_on_body(head(rule), body(rule))
         method = with_guard if recursive else single_pass
-        for new_tuple in method(feed, strata):
-            yield new_tuple
-            feed.add(new_tuple)
+        for new_tuple in method(closure, strata):
+            inferred.add(new_tuple)
+    return inferred
