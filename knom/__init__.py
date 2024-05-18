@@ -158,8 +158,8 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
             # TODO: always true? produce a single fact seems like a correct way
             # raise NotImplemented
             continue
-        print([print_triple(clause) for clause in head_])
-        for bindings in match_rule(head_.pop(), head_, facts, {}):
+        next_head, remaining = get_next_head((None, None, None), head_, {})
+        for bindings in match_rule(next_head, remaining, facts, {}):
             if isinstance(body, Variable):
                 g = bindings[body]
                 assert isinstance(g, Graph)
@@ -169,7 +169,6 @@ def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
                 assert isinstance(body, Graph)
                 instantiate_bnodes(body, bindings)
                 for triple in body:
-                    print('inferred')
                     yield assign(triple, bindings)
 
 
