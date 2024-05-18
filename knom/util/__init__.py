@@ -20,16 +20,33 @@ def only_one(some: Iterable) -> Any:  # noqa: ANN401
     raise AssertionError
 
 
+bnode_names: dict[BNode, str] = {}
+cur_bnode_name = "a"
+
+def bnode_name(bnode: BNode) -> str:
+    global bnode_names, cur_bnode_name
+    if bnode not in bnode_names:
+        bnode_names[bnode] = cur_bnode_name
+        last_bnode_char = chr(ord(cur_bnode_name[-1]) + 1)
+        if last_bnode_char > "z":
+            last_bnode_char = "aa"
+        cur_bnode_name = cur_bnode_name[:-1] + last_bnode_char
+    return bnode_names[bnode]
+
+
+
 def node_repr(
     node: Node | None, namespace_manager: NamespaceManager | None = None
 ) -> str:
     if node is None:
         return "_"
-    if isinstance(node, URIRef | Literal | BNode):
+    if isinstance(node, BNode):
+        return f"_:{bnode_name(node)}"
+    if isinstance(node, URIRef | Literal):
         return node.n3(namespace_manager=namespace_manager)
     if isinstance(node, Graph):
         return print_graph(node)
-    assert isinstance(node, Variable)
+    assert isinstance(node, Variable), node
     return node.toPython()
 
 
@@ -65,3 +82,43 @@ def print_rule(rule: Triple) -> str:
     if p == LOG.impliedBy:
         return f"{print_graph(o)} => {print_graph(s)}"
     raise ValueError
+
+
+def bnode_key(triple: Triple) -> tuple[Node]:
+    return tuple(n for n in triple if not isinstance(n, BNode))
+
+
+def compact_bnodes(g: Graph, head: set[Triple]) -> set[Triple]:
+    # TODO: think if we need it. Probably it is useless in a normal program.
+    # After removing some clauses, non-negative head might contain pathological case
+    # To avoid this, we try to compact the blank nodes
+    # Maybe it's also worth doing it in the general case.
+
+    bnode_masks = {}
+    for triple in head:
+        for node in triple:
+            if isinstance(node, BNode):
+                if node not in bnode_masks:
+                    bnode_masks[node] = set()
+                bnode_masks[node].add(bnode_key(triple))
+
+    bnode_idx = {}
+    for node, mask in bnode_masks.items():
+        key = frozenset(mask)
+        if key not in bnode_idx:
+            bnode_idx[key] = set()
+        bnode_idx[key].add(node)
+
+    new_bnodes = {}
+    for nodes in bnode_idx.values():
+        bnode = BNode()
+        for node in nodes:
+            new_bnodes[node] = bnode
+
+    compacted_head = QuotedGraph(store=g.store, identifier=BNode())
+    for triple in head:
+        compacted_triple = tuple(new_bnodes.get(node, node) for node in triple)
+        compacted_head.add(compacted_triple)
+
+    print("compacted from", len(head), "to", len(compacted_head))
+    return compacted_head
