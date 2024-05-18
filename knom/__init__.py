@@ -4,7 +4,7 @@ from typing import cast
 from rdflib import BNode, Graph, Literal, URIRef, Variable
 from rdflib.term import Node
 
-from knom.builtins import BUILTINS
+from knom.builtins import BUILTINS, STRING
 from knom.typing import Bindings, Mask, Triple
 from knom.util import LOG, print_triple
 
@@ -71,14 +71,17 @@ def mask(head_clause: Triple, bindings: Bindings | None = None) -> Mask:
         mask_node(head_clause[2], bindings),
     )
 
-def head_sort_key(prev_clause, clause, bindings):
+def head_sort_key(prev_clause: Triple, clause: set[Triple], bindings: Bindings) -> tuple:
     ps, pp, po = prev_clause
     s, p, o = clause
+
     return (
         ps == s,
         pp == p,
         po == o,
-        sum(1 if node in bindings else 0 for node in clause)
+        p not in BUILTINS,
+        sum(1 if node in bindings else 0 for node in clause),
+        p == STRING.ord
     )
 
 
@@ -100,6 +103,7 @@ def match_rule(
     else:
         s, p, o = head_clause
         if p in BUILTINS:
+            # TODO: copy bindings on update only
             for binding in BUILTINS[p](s, o, bindings.copy()):
                 next_head, remaining = get_next_head(head_clause, head, bindings)
                 yield from match_rule(next_head, remaining, facts, binding)
