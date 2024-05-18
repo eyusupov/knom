@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Iterable, Iterator
 from typing import cast
 
 from rdflib import BNode, Graph, Literal, URIRef, Variable
@@ -6,7 +6,7 @@ from rdflib.term import Node
 
 from knom.builtins import BUILTINS, STRING
 from knom.typing import Bindings, Mask, Triple
-from knom.util import LOG, print_triple
+from knom.util import LOG
 
 
 def bind_node(
@@ -85,7 +85,7 @@ def head_sort_key(prev_clause: Triple, clause: set[Triple], bindings: Bindings) 
     )
 
 
-def get_next_head(prev_clause: Triple, head: set[Triple], bindings: Bindings) -> tuple:
+def get_next_head(prev_clause: Triple | tuple[None, None, None], head: set[Triple], bindings: Bindings) -> tuple:
     # TODO: fix hex char range handling (builtins results are used in other builtins)
     if head == set():
         return None, set()
@@ -98,11 +98,12 @@ def get_next_head(prev_clause: Triple, head: set[Triple], bindings: Bindings) ->
 def match_rule(
     head_clause: Triple, head: set[Triple], facts: Graph, bindings: Bindings
 ) -> Iterator[Bindings]:
-    if head_clause == None:
+    if head_clause is None:
         yield bindings
     else:
         s, p, o = head_clause
         if p in BUILTINS:
+            assert isinstance(p, URIRef)
             # TODO: copy bindings on update only
             for binding in BUILTINS[p](s, o, bindings.copy()):
                 next_head, remaining = get_next_head(head_clause, head, bindings)
