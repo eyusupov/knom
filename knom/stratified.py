@@ -114,20 +114,7 @@ def firing_rules(rule_with_head: Rule, rules_with_body: Graph, cg: ConjunctiveGr
     head = get_head(rule_with_head)
 
     result = set()
-    filtered_rules = Graph()
-    i = 0
-    # TODO: this is anti-filter
-    for head_clause in head:
-        for _, _, _, formula in cg.quads(mask(head_clause)):
-            for rule in chain(
-                rules_with_body.triples((None, LOG.implies, formula)),
-                rules_with_body.triples((formula, LOG.impliedBy, None))
-            ):
-                i+= 1
-                filtered_rules.add(rule)
-    print("filter matched", i, "times")
-    print("comparing with", len(filtered_rules), "rules")
-    for rule_with_body in filtered_rules:
+    for rule_with_body in rules_with_body:
         if head_depends_on_body(head, get_body(rule_with_body)):
             result.add(rule_with_body)
     return result
