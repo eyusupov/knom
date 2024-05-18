@@ -3,19 +3,21 @@ from typing import cast
 
 from rdflib import BNode, Graph, URIRef, Variable
 from rdflib.graph import QuotedGraph
+from rdflib.namespace import NamespaceManager
 from rdflib.term import Node
 
-from knom import LOG, single_pass, match_rule, assign, instantiate_bnodes
-from knom.typing import Triple, Bindings
-from knom.util import print_rule
+from knom import LOG, assign, instantiate_bnodes, match_rule, single_pass, mask
+from knom.typing import Bindings, Triple
 
 Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
 RuleIndex = dict[Rule, int]
 
 
-def filter_rules(g: Graph) -> Iterable[Rule]:
+def filter_rules(g: Graph) -> Graph:
+    rules = Graph()
     for triple in g.triples_choices((None, [LOG.implies, LOG.impliedBy], None)):
-        yield cast(Rule, triple)
+        rules.add(triple)
+    return rules
 
 
 def node_depends(body_node: Node, head_node: Node, bnodes: Bindings) -> bool:
@@ -75,18 +77,18 @@ def clause_dependencies(head: Iterable[Triple] | Variable, body: Iterable[Triple
                 yield from clause_dependencies(complete_head - {head_triple}, complete_body - {body_triple}, bnodes_)
 
 
-def head(rule: Triple) -> Node:
+def head(rule: Triple) -> Variable | Graph:
     s, p, o = rule
-    if p == LOG.implies:
-        return s
-    return o
+    body_ = s if p == LOG.implies else o
+    assert isinstance(body_, Variable | Graph)
+    return body_
 
 
-def body(rule: Triple) -> Node:
+def body(rule: Triple) -> Variable | Graph:
     s, p, o = rule
-    if p == LOG.implies:
-        return o
-    return s
+    body_ = o if p == LOG.implies else s
+    assert isinstance(body_, Variable | Graph)
+    return body_
 
 
 def head_depends_on_body(head: Iterable[Triple] | Variable, body: Iterable[Triple] | Variable) -> bool:
@@ -97,12 +99,17 @@ def head_depends_on_body(head: Iterable[Triple] | Variable, body: Iterable[Tripl
     return True
 
 
-def firing_rules(rule_with_head: Rule, rules_with_body: Graph) -> Iterable[Rule]:
-    return {
-        rule_with_body
-        for rule_with_body in filter_rules(rules_with_body)
-        if head_depends_on_body(head(rule_with_head), body(rule_with_body))
-    }
+def firing_rules(rule_with_head: Rule, rules_with_body: Graph) -> set[Rule]:
+    head_ = head(rule_with_head)
+    result = set()
+    for head_clause in head_:
+        result.update({
+            rule_with_body
+            for rule_with_body in rules_with_body.triples(mask(head_clause))
+            if head_depends_on_body(head_, body(rule_with_body))
+        })
+    return result
+
 
 
 def last_index(index: RuleIndex) -> int:
@@ -126,33 +133,43 @@ class _TarjanState:
 
 def stratify_rule(
     rule: Rule,
-    rules: Graph,
-    state: _TarjanState
+    rule_dependencies: dict[Rule, set[Rule]],
+    state: _TarjanState,
+    namespace_manager: NamespaceManager = None
 ) -> Iterable[Graph]:
     state.index[rule] = state.new_index()
     state.low[rule] = state.index[rule]
     state.stack.append(rule)
-    for firing in firing_rules(rule, rules):
+    for firing in rule_dependencies[rule]:
         if firing not in state.index:
-            yield from stratify_rule(firing, rules, state)
+            yield from stratify_rule(firing, rule_dependencies, state, namespace_manager)
             state.low[rule] = min(state.low[rule], state.low[firing])
         elif firing in state.stack:
             state.low[rule] = min(state.low[firing], state.index[rule])
     if state.low[rule] == state.index[rule]:
         top = None
-        scc = Graph(namespace_manager=rules.namespace_manager)
+        scc = Graph(namespace_manager=namespace_manager)
         while top != rule:
             top = state.stack.pop()
             scc.add(top)
         yield scc
 
 
-def stratify_rules(rules: Graph) -> Iterable[Graph]:
+def stratify_rules(rules_and_facts: Graph) -> Iterable[Graph]:
     stratified_rules: list[Graph] = []
     state = _TarjanState()
-    for rule in filter_rules(rules):
+
+    rule_dependencies: dict[Rule, set[Rule]] = {}
+    rules = filter_rules(rules_and_facts)
+    print("calculating dependencies", len(rules))
+    for i, rule in enumerate(rules):
+        print("rule", i)
+        rule_dependencies[rule] = firing_rules(rule, rules)
+
+    print("doing stratification")
+    for rule in rules:
         if rule not in state.index:
-            stratified_rules.extend(stratify_rule(rule, rules, state))
+            stratified_rules.extend(stratify_rule(rule, rule_dependencies, state, rules_and_facts.namespace_manager))
     return stratified_rules
 
 
@@ -191,8 +208,8 @@ def stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
         feed.add(triple)
     for i, strata in enumerate(stratas):
         print("strata start", i, len(strata))
+        print(strata.serialize(format="n3"))
         rule = next(iter(strata))
-        print(strata.serialize(format='n3'))
         recursive = len(strata) > 1 or head_depends_on_body(head(rule), body(rule))
         method = with_guard if recursive else single_pass
         for new_tuple in method(feed, strata):
