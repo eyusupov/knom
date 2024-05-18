@@ -50,7 +50,14 @@ def test_clause_dependencies_same_lits(head: Graph, body: Graph) -> None:
     check_result(head, body, [[]])
 
 
-def test_clause_dependencies_extra_lits(head: Graph, body: Graph) -> None:
+def test_clause_dependencies_extra_lits_in_body(head: Graph, body: Graph) -> None:
+    body.add(lit_triple)
+    body.add(lit_triple2)
+    head.add(lit_triple)
+    check_result(head, body, [[]])
+
+
+def test_clause_dependencies_extra_lits_in_head(head: Graph, body: Graph) -> None:
     body.add(lit_triple)
     head.add(lit_triple)
     head.add(lit_triple2)
@@ -79,7 +86,7 @@ def test_clause_dependencies_extra_bns_in_body(head: Graph, body: Graph) -> None
     body.add(bnb_triple)
     head.add(bna_triple)
 
-    check_result(head, body, None)
+    check_result(head, body, [[]])
 
 
 def test_clause_dependencies_real_case_debug(head: Graph, body: Graph) -> None:
