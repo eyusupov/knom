@@ -21,12 +21,6 @@ RuleIndex = dict[Rule, int]
 
 NEGATION_PREDICATE = LOG.notIncludes
 
-def filter_rules(g: Graph) -> Graph:
-    rules = Graph()
-    for triple in g.triples_choices((None, [LOG.implies, LOG.impliedBy], None)):
-        rules.add(triple)
-    return rules
-
 
 def node_depends(body_node: Node, head_node: Node, bnodes: Bindings) -> bool:
     if isinstance(body_node, BNode):
@@ -98,14 +92,24 @@ def clause_dependencies(
 
 def head(rule: Triple) -> Variable | Graph:
     s, p, o = rule
-    body_ = s if p == LOG.implies else o
+    if p == LOG.implies:
+        body_ = s
+    elif p == LOG.impliedBy:
+        body_ = o
+    else:
+        raise AssertionError
     assert isinstance(body_, Variable | Graph)
     return body_
 
 
 def body(rule: Triple) -> Variable | Graph:
     s, p, o = rule
-    body_ = o if p == LOG.implies else s
+    if p == LOG.implies:
+        body_ = o
+    elif p == LOG.impliedBy:
+        body_ = s
+    else:
+        raise AssertionError
     assert isinstance(body_, Variable | Graph)
     return body_
 
@@ -157,7 +161,7 @@ def stratify_rule(
     rule: Rule,
     rule_dependencies: dict[Rule, set[Rule]],
     state: _TarjanState,
-    namespace_manager: NamespaceManager = None,
+    namespace_manager: NamespaceManager | None = None,
 ) -> Iterable[Graph]:
     state.index[rule] = state.new_index()
     state.low[rule] = state.index[rule]
@@ -179,26 +183,21 @@ def stratify_rule(
         yield scc
 
 
-def stratify_rules(rules_and_facts: Graph) -> Iterable[Graph]:
-    stratified_rules: list[Graph] = []
+def stratify_rules(rules: Graph) -> Iterable[Graph]:
     state = _TarjanState()
 
     rule_dependencies: dict[Rule, set[Rule]] = {}
-    rules = filter_rules(rules_and_facts)
-    print("calculating dependencies", len(rules))
-    for i, rule in enumerate(rules):
-        print("rule", i)
+    for rule in rules:
         rule_dependencies[rule] = firing_rules(rule, rules)
 
     print("doing stratification")
     for rule in rules:
+        from knom.util import print_rule
+        print("rule", print_rule(rule))
         if rule not in state.index:
-            stratified_rules.extend(
-                stratify_rule(
-                    rule, rule_dependencies, state, rules_and_facts.namespace_manager
+            yield from stratify_rule(
+                    rule, rule_dependencies, state, rules.namespace_manager
                 )
-            )
-    return stratified_rules
 
 
 def with_guard(facts: Graph, rules: Iterable[Triple]) -> Iterable[Triple]:
@@ -231,11 +230,10 @@ def with_guard(facts: Graph, rules: Iterable[Triple]) -> Iterable[Triple]:
 
 
 def stratified(facts: Graph, rules: Graph) -> Graph:
-    stratas = stratify_rules(rules)
     closure = ConjunctiveGraph()
     closure += facts
     inferred = Graph(store=closure.store)
-    for i, strata in enumerate(stratas):
+    for i, strata in enumerate(stratify_rules(rules)):
         print("strata start", i, len(strata))
         print(strata.serialize(format="n3"))
         rule = next(iter(strata))
