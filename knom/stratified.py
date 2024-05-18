@@ -72,8 +72,11 @@ def clause_dependencies(
     except StopIteration:
         yield complete_head
 
-    if len(complete_head) == 0 and len(bnodes) > 0:
-        return
+    if len(complete_head) == 0:
+        if len(bnodes) > 0:
+            return
+        else:
+            yield complete_head
 
     body_clauses = set(body)
     while len(body_clauses) > 0:
@@ -159,17 +162,17 @@ class _TarjanState:
 
 def stratify_rule(
     rule: Rule,
-    rule_dependencies: dict[Rule, set[Rule]],
+    rules_dependencies: dict[Rule, set[Rule]],
     state: _TarjanState,
     namespace_manager: NamespaceManager | None = None,
 ) -> Iterable[Graph]:
     state.index[rule] = state.new_index()
     state.low[rule] = state.index[rule]
     state.stack.append(rule)
-    for firing in rule_dependencies[rule]:
+    for firing in rules_dependencies[rule]:
         if firing not in state.index:
             yield from stratify_rule(
-                firing, rule_dependencies, state, namespace_manager
+                firing, rules_dependencies, state, namespace_manager
             )
             state.low[rule] = min(state.low[rule], state.low[firing])
         elif firing in state.stack:
@@ -186,17 +189,15 @@ def stratify_rule(
 def stratify_rules(rules: Graph) -> Iterable[Graph]:
     state = _TarjanState()
 
-    rule_dependencies: dict[Rule, set[Rule]] = {}
-    for rule in rules:
-        rule_dependencies[rule] = firing_rules(rule, rules)
+    rules_dependencies: dict[Rule, set[Rule]] = {}
 
-    print("doing stratification")
     for rule in rules:
-        from knom.util import print_rule
-        print("rule", print_rule(rule))
+        rules_dependencies[rule] = firing_rules(rule, rules)
+
+    for rule in rules:
         if rule not in state.index:
             yield from stratify_rule(
-                    rule, rule_dependencies, state, rules.namespace_manager
+                    rule, rules_dependencies, state, rules.namespace_manager
                 )
 
 
