@@ -89,6 +89,7 @@ def get_next_head(prev_clause: Triple | tuple[None, None, None], head: set[Tripl
     # TODO: fix hex char range handling (builtins results are used in other builtins)
     if head == set():
         return None, set()
+    # TODO: there is still varying performance from run to run, investigate
     next_head = max(head, key=lambda triple: head_sort_key(prev_clause, triple, bindings))
     remaining = head.copy()
     remaining.remove(next_head)

@@ -6,7 +6,7 @@ from rdflib.graph import QuotedGraph
 from rdflib.namespace import NamespaceManager
 from rdflib.term import Node
 
-from knom import LOG, assign, instantiate_bnodes, match_rule, single_pass, mask
+from knom import LOG, assign, instantiate_bnodes, match_rule, single_pass, mask, get_next_head
 from knom.typing import Bindings, Triple
 
 Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
@@ -189,7 +189,8 @@ def with_guard(facts: Graph, rules: Iterable[Triple]) -> Iterable[Triple]:
             guard = set(deps.pop())
             assert len(guard) > 0
             removed_facts = set()
-            for bindings in match_rule(guard.pop(), guard, facts, {}):
+            next_head, remaining = get_next_head((None, None, None), guard, {})
+            for bindings in match_rule(next_head, remaining, facts, {}):
                 for triple in guard:
                     fact = assign(triple, bindings)
                     facts.remove(fact)
