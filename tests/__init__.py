@@ -1,10 +1,9 @@
 from rdflib import RDF, BNode, Graph, Literal, Namespace, URIRef, Variable
 from rdflib.collection import Collection
+from rdflib.plugins.parsers.notation3 import N3Parser, SinkParser
 from rdflib_canon import CanonicalizedGraph
-from rdflib.plugins.parsers.notation3 import SinkParser, N3Parser
 
 from knom import LOG
-
 
 EX = Namespace("http://example.com/")
 var_a = Variable("a")

@@ -4,7 +4,9 @@ from knom.typing import Triple
 from knom.util import print_triple
 
 
-def draw_clause_dependencies_graph(clause_dependencies: list[tuple[Triple, Triple]]) -> AGraph:
+def draw_clause_dependencies_graph(
+    clause_dependencies: list[tuple[Triple, Triple]],
+) -> AGraph:
     dot = AGraph(directed=True)
     for clause1, clause2 in clause_dependencies:
         c1 = print_triple(clause1)

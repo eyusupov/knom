@@ -37,7 +37,9 @@ def frozen(set_: Iterable[Iterable[Triple]] | None) -> set[frozenset[Triple]]:
     return set(map(frozenset, set_))
 
 
-def check_result(head: Graph, body: Graph, expected: Iterable[Iterable[Triple]] | None) -> None:
+def check_result(
+    head: Graph, body: Graph, expected: Iterable[Iterable[Triple]] | None
+) -> None:
     result = clause_dependencies(head, body)
     assert frozen(result) == frozen(expected)
 
@@ -55,7 +57,9 @@ def test_clause_dependencies_extra_lits(head: Graph, body: Graph) -> None:
     check_result(head, body, [[lit_triple2]])
 
 
-def test_clause_dependencies_bns_in_different_positions(head: Graph, body: Graph) -> None:
+def test_clause_dependencies_bns_in_different_positions(
+    head: Graph, body: Graph
+) -> None:
     body.add(bna_triple)
     head.add(bna_triple)
     head.add(bnb_triple)

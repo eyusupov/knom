@@ -1,9 +1,10 @@
 from collections.abc import Iterator
 
-from rdflib import Literal, Variable, BNode
+from rdflib import BNode, Literal, Variable
 from rdflib.term import Node
 
 from knom.typing import Bindings
+
 
 def _get_cmp_args(s: Node, o: Node, bindings: Bindings) -> tuple[str, str] | None:
     s_ = bindings.get(s) if isinstance(s, Variable | BNode) else s

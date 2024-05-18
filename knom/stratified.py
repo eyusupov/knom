@@ -1,12 +1,19 @@
 from collections.abc import Iterable
-from typing import cast
 
 from rdflib import BNode, Graph, URIRef, Variable
 from rdflib.graph import QuotedGraph
 from rdflib.namespace import NamespaceManager
 from rdflib.term import Node
 
-from knom import LOG, assign, instantiate_bnodes, match_rule, single_pass, mask, get_next_head
+from knom import (
+    LOG,
+    assign,
+    get_next_head,
+    instantiate_bnodes,
+    mask,
+    match_rule,
+    single_pass,
+)
 from knom.typing import Bindings, Triple
 
 Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
@@ -44,10 +51,17 @@ def node_depends(body_node: Node, head_node: Node, bnodes: Bindings) -> bool:
 
 
 def depends(body_triple: Triple, head_triple: Triple, bnodes: Bindings) -> bool:
-    return all(node_depends(nb, nh, bnodes) for nb, nh in zip(body_triple, head_triple, strict=True))
+    return all(
+        node_depends(nb, nh, bnodes)
+        for nb, nh in zip(body_triple, head_triple, strict=True)
+    )
 
 
-def clause_dependencies(head: Iterable[Triple] | Variable, body: Iterable[Triple] | Variable, bnodes: Bindings | None = None) -> Iterable[frozenset[Triple]]:
+def clause_dependencies(
+    head: Iterable[Triple] | Variable,
+    body: Iterable[Triple] | Variable,
+    bnodes: Bindings | None = None,
+) -> Iterable[frozenset[Triple]]:
     if bnodes is None:
         bnodes = {}
     # something => body
@@ -74,7 +88,11 @@ def clause_dependencies(head: Iterable[Triple] | Variable, body: Iterable[Triple
             bnodes_ = bnodes.copy()
             head_triple = head_clauses.pop()
             if depends(body_triple, head_triple, bnodes_):
-                yield from clause_dependencies(complete_head - {head_triple}, complete_body - {body_triple}, bnodes_)
+                yield from clause_dependencies(
+                    complete_head - {head_triple},
+                    complete_body - {body_triple},
+                    bnodes_,
+                )
 
 
 def head(rule: Triple) -> Variable | Graph:
@@ -91,7 +109,9 @@ def body(rule: Triple) -> Variable | Graph:
     return body_
 
 
-def head_depends_on_body(head: Iterable[Triple] | Variable, body: Iterable[Triple] | Variable) -> bool:
+def head_depends_on_body(
+    head: Iterable[Triple] | Variable, body: Iterable[Triple] | Variable
+) -> bool:
     try:
         next(iter(clause_dependencies(head, body)))
     except StopIteration:
@@ -103,13 +123,14 @@ def firing_rules(rule_with_head: Rule, rules_with_body: Graph) -> set[Rule]:
     head_ = head(rule_with_head)
     result = set()
     for head_clause in head_:
-        result.update({
-            rule_with_body
-            for rule_with_body in rules_with_body.triples(mask(head_clause))
-            if head_depends_on_body(head_, body(rule_with_body))
-        })
+        result.update(
+            {
+                rule_with_body
+                for rule_with_body in rules_with_body.triples(mask(head_clause))
+                if head_depends_on_body(head_, body(rule_with_body))
+            }
+        )
     return result
-
 
 
 def last_index(index: RuleIndex) -> int:
@@ -121,8 +142,8 @@ def last_index(index: RuleIndex) -> int:
 class _TarjanState:
     def __init__(self) -> None:
         self.index: dict[Rule, int] = {}
-        self.low: dict[Rule,int] = {}
-        self.stack: list[Rule]= []
+        self.low: dict[Rule, int] = {}
+        self.stack: list[Rule] = []
         self.counter: int = 0
 
     def new_index(self) -> int:
@@ -135,14 +156,16 @@ def stratify_rule(
     rule: Rule,
     rule_dependencies: dict[Rule, set[Rule]],
     state: _TarjanState,
-    namespace_manager: NamespaceManager = None
+    namespace_manager: NamespaceManager = None,
 ) -> Iterable[Graph]:
     state.index[rule] = state.new_index()
     state.low[rule] = state.index[rule]
     state.stack.append(rule)
     for firing in rule_dependencies[rule]:
         if firing not in state.index:
-            yield from stratify_rule(firing, rule_dependencies, state, namespace_manager)
+            yield from stratify_rule(
+                firing, rule_dependencies, state, namespace_manager
+            )
             state.low[rule] = min(state.low[rule], state.low[firing])
         elif firing in state.stack:
             state.low[rule] = min(state.low[firing], state.index[rule])
@@ -169,7 +192,11 @@ def stratify_rules(rules_and_facts: Graph) -> Iterable[Graph]:
     print("doing stratification")
     for rule in rules:
         if rule not in state.index:
-            stratified_rules.extend(stratify_rule(rule, rule_dependencies, state, rules_and_facts.namespace_manager))
+            stratified_rules.extend(
+                stratify_rule(
+                    rule, rule_dependencies, state, rules_and_facts.namespace_manager
+                )
+            )
     return stratified_rules
 
 

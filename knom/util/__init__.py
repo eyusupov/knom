@@ -7,8 +7,9 @@ from knom.typing import Triple
 LOG = Namespace("http://www.w3.org/2000/10/swap/log#")
 
 
-
-def node_repr(node: Node | None, namespace_manager: NamespaceManager | None = None) -> str:
+def node_repr(
+    node: Node | None, namespace_manager: NamespaceManager | None = None
+) -> str:
     if node is None:
         return "_"
     if isinstance(node, URIRef | Literal | BNode):
@@ -19,14 +20,27 @@ def node_repr(node: Node | None, namespace_manager: NamespaceManager | None = No
     return node.toPython()
 
 
-def print_triple(triple: Triple, namespace_manager: NamespaceManager | None = None) -> str:
+def print_triple(
+    triple: Triple, namespace_manager: NamespaceManager | None = None
+) -> str:
     if isinstance(triple, Graph):
         return print_graph(triple)
-    return ", ".join([node_repr(c, namespace_manager=namespace_manager) for c in triple])
+    return ", ".join(
+        [node_repr(c, namespace_manager=namespace_manager) for c in triple]
+    )
 
 
 def print_graph(formula: Graph) -> str:
-    return "{" + ". ".join([print_triple(c, namespace_manager=formula.namespace_manager) for c in formula]) + "}"
+    return (
+        "{"
+        + ". ".join(
+            [
+                print_triple(c, namespace_manager=formula.namespace_manager)
+                for c in formula
+            ]
+        )
+        + "}"
+    )
 
 
 def print_rule(rule: Triple) -> str:

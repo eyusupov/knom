@@ -71,7 +71,10 @@ def mask(head_clause: Triple, bindings: Bindings | None = None) -> Mask:
         mask_node(head_clause[2], bindings),
     )
 
-def head_sort_key(prev_clause: Triple, clause: set[Triple], bindings: Bindings) -> tuple:
+
+def head_sort_key(
+    prev_clause: Triple, clause: set[Triple], bindings: Bindings
+) -> tuple:
     ps, pp, po = prev_clause
     s, p, o = clause
 
@@ -81,16 +84,20 @@ def head_sort_key(prev_clause: Triple, clause: set[Triple], bindings: Bindings) 
         po == o,
         p not in BUILTINS,
         sum(1 if node in bindings else 0 for node in clause),
-        p == STRING.ord
+        p == STRING.ord,
     )
 
 
-def get_next_head(prev_clause: Triple | tuple[None, None, None], head: set[Triple], bindings: Bindings) -> tuple:
+def get_next_head(
+    prev_clause: Triple | tuple[None, None, None], head: set[Triple], bindings: Bindings
+) -> tuple:
     # TODO: fix hex char range handling (builtins results are used in other builtins)
     if head == set():
         return None, set()
     # TODO: there is still varying performance from run to run, investigate
-    next_head = max(head, key=lambda triple: head_sort_key(prev_clause, triple, bindings))
+    next_head = max(
+        head, key=lambda triple: head_sort_key(prev_clause, triple, bindings)
+    )
     remaining = head.copy()
     remaining.remove(next_head)
     return next_head, remaining

@@ -1,9 +1,4 @@
-from typing import cast
-
-import pytest
-from rdflib import Graph, Namespace
-
-from knom.stratified import firing_rules
+from rdflib import Namespace
 
 EX = Namespace("http://example.com/")
 

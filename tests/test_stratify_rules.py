@@ -1,11 +1,9 @@
-import pytest
-from rdflib import Graph, BNode, URIRef
-from rdflib.collection import Collection
+from rdflib import Graph, URIRef
 
 from knom.stratified import stratify_rules
 from knom.util import print_rule
 
-from . import split_rules_and_facts, EX, generate_tests_from_manifests
+from . import EX, generate_tests_from_manifests, split_rules_and_facts
 
 MANIFEST_PATH = "tests/n3/stratification-manifests.n3"
 

@@ -19,10 +19,7 @@ def test_assign() -> None:
 def test_assign_unbound_var() -> None:
     triple = assign(
         (var_a, var_b, var_c),
-        {
-            var_a: bn_a,
-            var_b: lit_b
-        },
+        {var_a: bn_a, var_b: lit_b},
     )
     assert triple[:2] == (bn_a, lit_b)
     assert isinstance(triple[2], BNode)
@@ -31,10 +28,7 @@ def test_assign_unbound_var() -> None:
 def test_assign_unbound_bnode() -> None:
     triple = assign(
         (var_a, var_b, bn_c),
-        {
-            var_a: bn_a,
-            var_b: lit_b
-        },
+        {var_a: bn_a, var_b: lit_b},
     )
     assert triple[:2] == (bn_a, lit_b)
     assert isinstance(triple[2], BNode)
@@ -44,11 +38,7 @@ def test_assign_unbound_bnode() -> None:
 def test_assign_bound_bnode() -> None:
     triple = assign(
         (var_a, var_b, bn_c),
-        {
-            var_a: bn_a,
-            var_b: lit_b,
-            bn_c: lit_c
-        },
+        {var_a: bn_a, var_b: lit_b, bn_c: lit_c},
     )
     assert triple == (bn_a, lit_b, lit_c)
 
@@ -56,11 +46,7 @@ def test_assign_bound_bnode() -> None:
 def test_assign_bnode_bound_to_bnode() -> None:
     triple = assign(
         (var_a, var_b, bn_c),
-        {
-            var_a: bn_a,
-            var_b: lit_b,
-            bn_c: bn_b
-        },
+        {var_a: bn_a, var_b: lit_b, bn_c: bn_b},
     )
     assert triple == (bn_a, lit_b, bn_b)
 
@@ -68,11 +54,7 @@ def test_assign_bnode_bound_to_bnode() -> None:
 def test_assign_var_bound_to_graph() -> None:
     triple = assign(
         (var_a, var_b, bn_c),
-        {
-            var_a: lit_graph,
-            var_b: lit_b,
-            bn_c: bn_b
-        },
+        {var_a: lit_graph, var_b: lit_b, bn_c: bn_b},
     )
     assert triple == (lit_graph, lit_b, bn_b)
 
@@ -80,10 +62,6 @@ def test_assign_var_bound_to_graph() -> None:
 def test_assign_bnode_bound_to_graph() -> None:
     triple = assign(
         (bn_a, var_b, bn_c),
-        {
-            bn_a: lit_graph,
-            var_b: lit_b,
-            bn_c: bn_b
-        },
+        {bn_a: lit_graph, var_b: lit_b, bn_c: bn_b},
     )
     assert triple == (lit_graph, lit_b, bn_b)
