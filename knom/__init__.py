@@ -189,12 +189,13 @@ def fire_rule(rule: Triple, bindings: Bindings) -> Iterator[Triple]:
             yield assign(triple, bindings)
 
 
-def single_rule(facts: Graph, rule: Triple) -> Iterator[Triple]:
+def single_rule(rule: Triple, facts: Graph) -> Iterator[Triple]:
     head_graph = get_head(rule)
     assert isinstance(head_graph, Graph)
     head = set(head_graph)
     if head == set():
         yield from cast(Graph, get_body(rule))
+        return
     next_head, remaining = get_next_head((None, None, None), head, {})
     for bindings in match_rule(next_head, remaining, facts, {}):
         yield from fire_rule(rule, bindings)
