@@ -203,4 +203,4 @@ def single_rule(rule: Triple, facts: Graph) -> Iterator[Triple]:
 
 def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
     for rule in rules:
-        yield from single_rule(facts, rule)
+        yield from single_rule(rule, facts)

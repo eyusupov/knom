@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from itertools import chain
 from typing import cast
 
-from rdflib import BNode, Graph, URIRef, Variable, RDF
+from rdflib import BNode, Graph, URIRef, Variable
 from rdflib.graph import ConjunctiveGraph, QuotedGraph
 from rdflib.namespace import NamespaceManager
 from rdflib.term import Node
@@ -259,8 +259,8 @@ def create_positive_rule(rule: Triple) -> tuple[Rule, Rule]:
 def negative_rules(facts: Graph, rules: Graph) -> Iterable[Triple]:
     rule = only_one(rules)
     positive_rule, non_negative_rule = create_positive_rule(rule)
-    results = set(single_rule(facts, positive_rule))
-    all_results = set(single_rule(facts, non_negative_rule))
+    results = set(single_rule(positive_rule, facts))
+    all_results = set(single_rule(non_negative_rule, facts))
     yield from (all_results - results)
 
 
