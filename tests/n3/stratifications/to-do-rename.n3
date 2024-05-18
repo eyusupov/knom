@@ -1,0 +1,31 @@
+@prefix : <http://example.com/>.
+
+[] :char 'a';
+  :start 0;
+  :end 1.
+
+[] a :B;
+  :start 1.
+
+[] :char 'b';
+  :start 0;
+  :end 1.
+
+{ :_a :char 'a';
+  :start ?a;
+  :end ?b.
+} => {
+  :_a a :A;
+  :start ?a;
+  :end ?b.
+}.
+
+{
+  [] :char 'b';
+  :start ?a;
+  :end ?b.
+} => {
+  [] a :B;
+  :start ?a;
+  :end ?b.
+}.

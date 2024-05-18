@@ -16,6 +16,11 @@
       mf:result <single-pass/simple-match-ref.n3>
     ]
     [
+      mf:name "Implied by: simple rule matching a fact";
+      mf:action <single-pass/simple-implied-by-match.n3>;
+      mf:result <single-pass/simple-implied-by-match-ref.n3>
+    ]
+    [
       mf:name "Unbound variable in conclusion produces a bnode";
       mf:action <single-pass/unbound-variable-in-conclusion.n3>;
       mf:result <single-pass/unbound-variable-in-conclusion-ref.n3>
@@ -109,5 +114,30 @@
       mf:name "All clauses in the graph term must match";
       mf:action <scoping/graph-term-all-clauses-match.n3>;
       mf:result <scoping/graph-term-all-clauses-match-ref.n3>;
+    ]
+    [
+      mf:name "Multiple facts are needed to fully match the premise";
+      mf:action <single-pass/multiple-facts.n3>;
+      mf:result <single-pass/multiple-facts-ref.n3>;
+    ]
+    [
+      mf:name "string:ord builtin, variable arg";
+      mf:action <builtins/string-ord-variable.n3>;
+      mf:result <builtins/string-ord-variable-ref.n3>;
+    ]
+    [
+      mf:name "string:ord builtin, literal arg";
+      mf:action <builtins/string-ord-literal.n3>;
+      mf:result <builtins/string-ord-literal-ref.n3>;
+    ]
+    [
+      mf:name "string:ord builtin, compare args";
+      mf:action <builtins/string-ord-compare.n3>;
+      mf:result <builtins/string-ord-compare-ref.n3>;
+    ]
+    [
+      mf:name "string:ord builtin, char output";
+      mf:action <builtins/string-ord-char-output.n3>;
+      mf:result <builtins/string-ord-char-output-ref.n3>;
     ]
   ).

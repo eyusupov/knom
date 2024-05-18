@@ -1,0 +1,7 @@
+@prefix : <http://example.com/>.
+
+:a a :List;
+  :first :x;
+  :rest [].
+
+{ ?x :rest ?y. ?a :length [ :lt 10 ] } => { ?y :rest _:z }.

@@ -15,6 +15,7 @@ per-file-ignores = "tests: S101"
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
+  "ANN101", # type annotations for self method
   # ignore asserts warnings
   "S101",
   "B011",

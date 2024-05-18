@@ -1,0 +1,38 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <#>.
+
+[] a mf:Manifest ;
+  mf:name "Tests for rules stratification";
+  mf:entries (
+    [
+      mf:name "Simple test";
+      mf:action <recursive/simple.n3>;
+      mf:result  <recursive/simple-stratas.n3>
+    ]
+    [
+      mf:name "Depends on cycle";
+      mf:action <recursive/depends-on-cycle.n3>;
+      mf:result  <recursive/depends-on-cycle-stratas.n3>
+    ]
+    [
+      mf:name "Harder test";
+      mf:action <recursive/harder.n3>;
+      mf:result  <recursive/harder-stratas.n3>
+    ]
+    [
+      mf:name "Interdependent rules";
+      mf:action <recursive/interdependent.n3>;
+      mf:result  <recursive/interdependent-stratas.n3>
+    ]
+    [
+      mf:name "Results are order-dependent in Eye reasoner";
+      mf:action <recursive/order-dependent.n3>;
+      mf:result  <recursive/order-dependent-stratas.n3>
+    ]
+    [
+      mf:name "Two independent cycles";
+      mf:action <recursive/two-cycles.n3>;
+      mf:result  <recursive/two-cycles-stratas.n3>
+    ]
+  ).

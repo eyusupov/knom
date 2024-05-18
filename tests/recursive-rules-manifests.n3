@@ -1,0 +1,19 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <#>.
+
+[] a mf:Manifest ;
+  mf:name "Positive non-recursive rules suitable for fixpoint evaluation";
+  mf:entries (
+    [
+      mf:name "Rules that depend on each other produce all results";
+      mf:action <positive-nonrecursive-rules/dependend-productions.n3>;
+      mf:result <positive-nonrecursive-rules/dependend-productions-ref.n3>;
+    ]
+    [
+      mf:name "Rules with blank nodes that depend on each other produce all results";
+      mf:action <positive-nonrecursive-rules/dependend-productions-bnodes.n3>;
+      mf:result <positive-nonrecursive-rules/dependend-productions-bnodes-ref.n3>;
+    ]
+  ).
+

@@ -1,0 +1,46 @@
+@prefix log: <http://www.w3.org/2000/10/swap/log#> .
+@prefix p: <http://example.com/parser#> .
+@prefix test: <http://example.com/test#> .
+
+# C ::= C B*
+
+[] a test:C ;
+   p:start 0 ;
+    p:end 1 ;
+
+[] p:start 1 ;
+   p:end 2 ;
+    a test:B .
+
+[] p:start 2 ;
+    p:end 3 ;
+    a test:B .
+
+[] p:start 3 ;
+    p:end 4 ;
+    a test:B .
+
+[] p:start 4 ;
+   p:end 5 ;
+    a test:B .
+
+[] p:start 5 ;
+    p:end 6 ;
+    p:value """
+""" .
+
+{
+  [] a test:C ;
+      p:start ?a ;
+      p:end ?c .
+} log:impliedBy {
+  [] a test:C ;
+      p:start ?a ;
+      p:end ?b .
+
+  [] a test:B ;
+      p:start ?b ;
+      p:end ?c .
+}.
+
+

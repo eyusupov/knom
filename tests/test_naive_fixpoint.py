@@ -10,6 +10,7 @@ from . import (
 
 EX = Namespace("http://example.com/#")
 
+
 def pytest_generate_tests(metafunc) -> None:  # noqa: ANN001
     generate_tests_from_manifests(
         "tests/n3/positive-non-recursive-rules-manifests.n3", metafunc

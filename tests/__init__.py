@@ -1,5 +1,6 @@
 from rdflib import RDF, BNode, Graph, Literal, Namespace, URIRef, Variable
 from rdflib.collection import Collection
+from rdflib.plugins.parsers.notation3 import N3Parser, SinkParser
 from rdflib_canon import CanonicalizedGraph
 
 from knom import LOG
@@ -25,6 +26,7 @@ varc_triple = (lit_a, lit_b, var_c)
 
 bna_triple = (bn_a, lit_b, lit_c)
 bnb_triple = (lit_a, bn_b, lit_c)
+bnb_triple2 = (bn_b, lit_b, lit_c)
 bnc_triple = (lit_a, lit_b, bn_c)
 
 lit_graph = Graph().add(lit_triple)
@@ -68,7 +70,7 @@ def split_rules_and_facts(graph: Graph) -> tuple[Graph, Graph]:
     rules = Graph(namespace_manager=graph.namespace_manager)
     facts = Graph(namespace_manager=graph.namespace_manager)
     for s, p, o in graph:
-        if p == LOG.implies:
+        if p in [LOG.implies, LOG.impliedBy]:
             rules.add((s, p, o))
         else:
             facts.add((s, p, o))

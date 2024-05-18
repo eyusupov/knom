@@ -1,0 +1,9 @@
+@prefix : <http://example.com/>.
+
+:a :a :a.
+
+{ :a :a :a } => { :b :c :f }. # rule1
+{ ?a ?b :f } => { ?b ?a :q }. # rule2
+{ :c ?b :q } => { ?b :d :w }. # rule3
+{ :c ?b :w } => { ?b :d :q }. # rule3
+{ ?b ?d :q } => { :z :z :z }. # rule4

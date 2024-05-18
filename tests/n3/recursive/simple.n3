@@ -1,0 +1,4 @@
+@prefix : <http://example.com/>.
+
+
+{ ?x :rest ?y } => { ?y _:z _:z }.

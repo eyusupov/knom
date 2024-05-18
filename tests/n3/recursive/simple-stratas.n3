@@ -1,0 +1,7 @@
+@prefix : <http://example.com/>.
+
+:Result :stratas (
+  {
+    { ?x :rest ?y } => { ?y :rest _:z }
+  }
+).

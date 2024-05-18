@@ -16,6 +16,8 @@ from . import (
     varaa_graph,
 )
 
+# TODO: add match_mode tests
+
 
 def test_bind_node_var_to_bn() -> None:
     bindings = list(bind_node(var_a, bn_a))
@@ -25,6 +27,7 @@ def test_bind_node_var_to_bn() -> None:
 def test_bind_node_var_to_same_bn() -> None:
     bindings = list(bind_node(var_a, bn_a, {var_a: bn_a}))
     assert bindings == [{var_a: bn_a}]
+
 
 # Hmm...
 def test_bind_node_var_to_different_bn() -> None:
@@ -140,5 +143,3 @@ def test_bind_node_bn_graph_to_graph() -> None:
 def test_bind_node_bn_graph_to_graph_conflict() -> None:
     bindings = list(bind_node(bna_graph, lit_graph, {bn_a: lit_b}))
     assert bindings == []
-
-

@@ -1,0 +1,5 @@
+@prefix : <http://example.com/>.
+
+{ ?x :rest ?y } :depends { ?y :rest _:z }.
+{ ?y :rest _:z } :depends { ?y :rest _:z }.
+{ ?y :rest _:z } :depends { ?y :rest _:z }.

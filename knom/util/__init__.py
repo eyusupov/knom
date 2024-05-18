@@ -1,33 +1,54 @@
 from rdflib import BNode, Graph, Literal, Namespace, URIRef, Variable
+from rdflib.namespace import NamespaceManager
 from rdflib.term import Node
 
 from knom.typing import Triple
 
-# TODO(eyusupov): remove
-EX = Namespace("http://example.com/")
-
 LOG = Namespace("http://www.w3.org/2000/10/swap/log#")
 
 
-
-def node_repr(node: Node | None) -> str:
+def node_repr(
+    node: Node | None, namespace_manager: NamespaceManager | None = None
+) -> str:
     if node is None:
         return "_"
-    assert isinstance(node, URIRef | Literal | BNode | Variable), node.__class__
-    return node.toPython().replace(EX, ":")
+    if isinstance(node, URIRef | Literal | BNode):
+        return node.n3(namespace_manager=namespace_manager)
+    if isinstance(node, Graph):
+        return print_graph(node)
+    assert isinstance(node, Variable)
+    return node.toPython()
 
 
-def print_triple(triple: Triple) -> str:
-    return ", ".join([node_repr(c) for c in triple])
+def print_triple(
+    triple: Triple, namespace_manager: NamespaceManager | None = None
+) -> str:
+    if isinstance(triple, Graph):
+        return print_graph(triple)
+    return ", ".join(
+        [node_repr(c, namespace_manager=namespace_manager) for c in triple]
+    )
 
 
-def print_formula(formula: Graph) -> str:
-    return "{" + ". ".join([print_triple(c) for c in formula]) + "}"
+def print_graph(formula: Graph) -> str:
+    return (
+        "{"
+        + ". ".join(
+            [
+                print_triple(c, namespace_manager=formula.namespace_manager)
+                for c in formula
+            ]
+        )
+        + "}"
+    )
 
 
 def print_rule(rule: Triple) -> str:
-    head, implies, body = rule
-    assert implies == LOG.implies
-    assert isinstance(head, Graph)
-    assert isinstance(body, Graph)
-    return f"{print_formula(head)} => {print_formula(body)}"
+    s, p, o = rule
+    assert isinstance(s, Graph)
+    assert isinstance(o, Graph)
+    if p == LOG.implies:
+        return f"{print_graph(s)} => {print_graph(o)}"
+    if p == LOG.impliedBy:
+        return f"{print_graph(o)} => {print_graph(s)}"
+    raise ValueError
