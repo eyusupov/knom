@@ -242,8 +242,8 @@ def negative_rule(facts: Graph, rule: Graph) -> Iterable[Triple]:
     yield from (all_results - results)
 
 
-def stratified_rule(facts: Graph, rule: Triple) -> Iterable[Triple]:
-    recursive = head_depends_on_body(get_head(rule), get_body(rule))
+def stratified_rule(facts: Graph, rule: Triple, rules_dependencies: RulesDependencies) -> Iterable[Triple]:
+    recursive = rule in rules_dependencies[rule]
     if recursive:
         method = with_guard
     elif is_negative(rule):
@@ -253,13 +253,20 @@ def stratified_rule(facts: Graph, rule: Triple) -> Iterable[Triple]:
     yield from method(facts, rule)
 
 
-def euler(facts: Graph, rules: Graph, rules_dependencies: RulesDependencies):
-    raise NotImplementedError
+def mutual(closure: Graph, inferred: Graph, rules: set[Rule], rules_dependencies: RulesDependencies):
+    if rules == set():
+        return
+    rule = rules.pop()
+    for firing in rules_dependencies[rule]:
+        if firing in rules:
+            yield from mutual(closure, inferred, rules, rules_dependencies)
+    add_triples(inferred, stratified_rule(closure, rule, rules_dependencies))
+    yield from inferred
 
 
 def _stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
     closure = ConjunctiveGraph()
-    closure += facts
+    closure += facts # TODO: avoid copying facts, important for real life scenarios
     rules_dependencies = get_rules_dependencies(rules)
     for i, strata in enumerate(stratify_rules(rules, rules_dependencies)):
         print("strata", i, "rules", len(strata))
@@ -269,10 +276,9 @@ def _stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
         rule_iter = iter(strata)
         rule = next(rule_iter)
         try:
-            next(rule_iter)
-            add_triples(inferred, euler(closure, rules, rules_dependencies))
+            yield from mutual(closure, inferred, set(strata), rules_dependencies)
         except StopIteration:
-            add_triples(inferred, stratified_rule(closure, rule))
+            add_triples(inferred, stratified_rule(closure, rule, rules_dependencies))
             yield from inferred
         print(inferred.serialize(format="n3"))
 
