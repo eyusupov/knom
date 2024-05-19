@@ -253,18 +253,28 @@ def stratified_rule(facts: Graph, rule: Triple) -> Iterable[Triple]:
     yield from method(facts, rule)
 
 
+def euler(facts: Graph, rules: Graph, rules_dependencies: RulesDependencies):
+    raise NotImplementedError
+
+
 def _stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
     closure = ConjunctiveGraph()
     closure += facts
     rules_dependencies = get_rules_dependencies(rules)
     for i, strata in enumerate(stratify_rules(rules, rules_dependencies)):
-        for rule in strata:
-            print("strata", i, "rules", len(strata))
-            print(strata.serialize(format="n3"))
-            inferred = Graph(store=closure.store)
+        print("strata", i, "rules", len(strata))
+        print(strata.serialize(format="n3"))
+        inferred = Graph(store=closure.store)
+
+        rule_iter = iter(strata)
+        rule = next(rule_iter)
+        try:
+            next(rule_iter)
+            add_triples(inferred, euler(closure, rules, rules_dependencies))
+        except StopIteration:
             add_triples(inferred, stratified_rule(closure, rule))
             yield from inferred
-            print(inferred.serialize(format="n3"))
+        print(inferred.serialize(format="n3"))
 
 
 def stratified(facts: Graph, rules: Graph) -> Graph():
