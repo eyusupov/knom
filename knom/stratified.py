@@ -35,14 +35,10 @@ def node_depends(body_node: Node, head_node: Node, bnodes: Bindings) -> bool:
         return True
     if isinstance(head_node, Variable | BNode):
         # Variable in head cannot match a produced blank node
-        if isinstance(body_node, BNode):
-            return False
-        return True
+        return not isinstance(body_node, BNode)
     assert not isinstance(body_node, Graph)
     assert not isinstance(head_node, Graph)
-    if body_node == head_node:
-        return True
-    return False
+    return body_node == head_node
 
 
 def depends(body_triple: Triple, head_triple: Triple, bnodes: Bindings) -> bool:
@@ -175,6 +171,7 @@ def stratify_rules(rules: Graph) -> Iterable[Graph]:
 
 def is_negative(rule: Rule) -> bool:
     return any(p == NEGATION_PREDICATE for s, p, o in get_head(rule))
+
 
 def with_guard(facts: Graph, rules: Iterable[Triple]) -> Iterable[Triple]:
     # TODO: the rules depend on each other, so we need to make sure
