@@ -17,7 +17,6 @@ from knom.typing import Bindings, Triple
 from knom.util import add_triples, only_one
 
 Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
-RuleIndex = dict[Rule, int]
 RulesDependencies = dict[Rule, set[Rule]]
 
 NEGATION_PREDICATE = LOG.notIncludes
@@ -173,18 +172,13 @@ def is_negative(rule: Rule) -> bool:
     return any(p == NEGATION_PREDICATE for s, p, o in get_head(rule))
 
 
-def with_guard(facts: Graph, rule: Iterable[Triple]) -> Iterable[Triple]:
-    if is_negative(rule):
-        # TODO: can we handle negative recursive?
-        raise NotImplementedError
-
-    head = get_head(rule)
-    body = get_body(rule)
+def get_guard(rule1: Rule, rule2: Rule) -> tuple[Graph, Graph]:
+    head = get_head(rule1)
+    body = get_body(rule2)
     deps = set(clause_dependencies(head, body))
     if len(deps) > 1:
         raise NotImplementedError
     if len(deps) == 0:
-        #yield from single_pass(facts, rules)
         raise AssertionError
 
     unmatched = deps.pop()
@@ -194,9 +188,21 @@ def with_guard(facts: Graph, rule: Iterable[Triple]) -> Iterable[Triple]:
 
     add_triples(guard, unmatched)
 
-    for triple in get_head(rule):
+    for triple in head:
         if triple not in unmatched:
             rest.add(triple)
+    return guard, rest
+
+
+
+def with_guard(facts: Graph, rule1: Rule, rule2: Rule | None = None) -> Iterable[Triple]:
+    if is_negative(rule1):
+        # TODO: can we handle negative recursive?
+        raise NotImplementedError
+
+    if rule2 is None:
+        rule2 = rule1
+    guard, rest = get_guard(rule1, rule2)
 
     guard_facts = Graph()
     old_inferred = Graph()
@@ -204,16 +210,17 @@ def with_guard(facts: Graph, rule: Iterable[Triple]) -> Iterable[Triple]:
 
     assert len(guard) > 0
     add_triples(guard_facts, single_rule(facts, (guard, LOG.implies, guard)))
+    # Guard facts miss the first elements (queried in next line), so the consecutive recursions will not recreate new nodes once more
     add_triples(old_inferred, single_rule(facts, (rest, LOG.implies, rest))) # Not really inferred, but still
 
     for _ in range(len(guard_facts) // len(guard)):
         inferred = Graph(store=all_inferred.store)
-        add_triples(inferred, single_rule(guard_facts + old_inferred, rule))
+        add_triples(inferred, single_rule(guard_facts + old_inferred, rule1))
         old_inferred = inferred
     yield from all_inferred
 
 
-def create_positive_rule(rule: Triple) -> tuple[Rule, Rule]:
+def create_positive_rule(rule: Rule) -> tuple[Rule, Rule]:
     g = Graph() # Just to create some store implicitly
     positive_head = QuotedGraph(store=g.store, identifier=BNode())
     non_negative_head = QuotedGraph(store=g.store, identifier=BNode())
@@ -235,10 +242,13 @@ def create_positive_rule(rule: Triple) -> tuple[Rule, Rule]:
     return positive_rule, non_negative_rule
 
 
-def negative_rule(facts: Graph, rule: Graph) -> Iterable[Triple]:
+def negative_rule(facts: Graph, rule: Rule) -> Iterable[Triple]:
     positive_rule, non_negative_rule = create_positive_rule(rule)
     results = set(single_rule(facts, positive_rule))
     all_results = set(single_rule(facts, non_negative_rule))
+    # TODO: we probably need to handle difference in bnode ids here.
+    # fixpoint algorithm will work then
+    # fact, rule, bnode position -> bnode identifier
     yield from (all_results - results)
 
 
@@ -252,33 +262,67 @@ def stratified_rule(facts: Graph, rule: Triple, rules_dependencies: RulesDepende
         method = single_rule
     yield from method(facts, rule)
 
+def euler(strata: set[Rule], triggered_rules: RulesDependencies) -> Iterable[Rule]:
+    rules = {rule: triggered_rules[rule].intersection(strata) for rule in strata}
+    rule = next(iter(strata))
+    visited = {}
+    path = [rule]
 
-def mutual(closure: Graph, inferred: Graph, rules: set[Rule], rules_dependencies: RulesDependencies):
-    if rules == set():
-        return
-    rule = rules.pop()
-    for firing in rules_dependencies[rule]:
-        if firing in rules:
-            yield from mutual(closure, inferred, rules, rules_dependencies)
-    add_triples(inferred, stratified_rule(closure, rule, rules_dependencies))
-    yield from inferred
+    while True:
+        start = rule
+        choices = rules[rule]
+        while choices:
+            visited[rule] = path[0]
+            rule = choices.pop()
+            choices = rules[rule]
+            path.insert(0, rule)
+        if rule != start:
+            raise AssertionError
 
+        while visited:
+            rule, cur = visited.popitem()
+            choices = rules[rule]
+            if choices:
+                break
+        else:
+            break
+
+    if any(rules.values()):
+        raise AssertionError
+
+    return path
+
+
+def mutual(closure: Graph, strata: set[Rule], triggered_rules: RulesDependencies):
+    rules = euler(strata, triggered_rules)
+    rule1 = rules[0]
+    for i, rule in enumerate(rules[1:]):
+        print(i)
+        yield from with_guard(closure, rule, rule1)
+        rule1 = rule
 
 def _stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
     closure = ConjunctiveGraph()
     closure += facts # TODO: avoid copying facts, important for real life scenarios
     rules_dependencies = get_rules_dependencies(rules)
+
+    triggered_rules: RulesDependencies = {}
+    for rule, firing_rules in rules_dependencies.items():
+        for firing_rule in firing_rules:
+            if firing_rule not in triggered_rules:
+                triggered_rules[firing_rule] = set()
+            triggered_rules[firing_rule].add(rule)
+
     for i, strata in enumerate(stratify_rules(rules, rules_dependencies)):
         print("strata", i, "rules", len(strata))
         print(strata.serialize(format="n3"))
         inferred = Graph(store=closure.store)
 
-        rule_iter = iter(strata)
-        rule = next(rule_iter)
-        try:
-            yield from mutual(closure, inferred, set(strata), rules_dependencies)
-        except StopIteration:
-            add_triples(inferred, stratified_rule(closure, rule, rules_dependencies))
+        if len(strata) > 1:
+            add_triples(inferred, mutual(closure, set(strata), triggered_rules))
+            yield from inferred
+        else:
+            add_triples(inferred, stratified_rule(closure, next(iter(strata)), rules_dependencies))
             yield from inferred
         print(inferred.serialize(format="n3"))
 

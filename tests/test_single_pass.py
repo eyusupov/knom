@@ -2,8 +2,9 @@ from rdflib import Graph, URIRef
 from rdflib.graph import ConjunctiveGraph
 
 from knom import single_pass
+from knom.util import split_rules_and_facts
 
-from . import generate_tests_from_manifests, postprocess, split_rules_and_facts
+from . import generate_tests_from_manifests, postprocess
 
 MANIFEST_PATH = "tests/n3/single-pass-manifests.n3"
 

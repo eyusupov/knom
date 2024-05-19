@@ -1,11 +1,11 @@
 from rdflib import Graph, Namespace, URIRef
 
 from knom.stratified import stratified
+from knom.util import split_rules_and_facts
 
 from . import (
     generate_tests_from_manifests,
     postprocess,
-    split_rules_and_facts,
 )
 
 
