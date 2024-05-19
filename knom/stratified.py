@@ -18,6 +18,7 @@ from knom.util import add_triples, only_one
 
 Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
 RuleIndex = dict[Rule, int]
+RulesDependencies = dict[Rule, set[Rule]]
 
 NEGATION_PREDICATE = LOG.notIncludes
 
@@ -109,10 +110,11 @@ def firing_rules(rule_with_head: Rule, rules_with_body: Graph) -> set[Rule]:
     return result
 
 
-def last_index(index: RuleIndex) -> int:
-    if index:
-        return max(index.values())
-    return 0
+def get_rules_dependencies(rules: Graph) -> RulesDependencies:
+    rules_dependencies: RulesDependencies = {}
+    for rule in rules:
+        rules_dependencies[rule] = firing_rules(cast(Rule, rule), rules)
+    return rules_dependencies
 
 
 class _TarjanState:
@@ -130,7 +132,7 @@ class _TarjanState:
 
 def stratify_rule(
     rule: Rule,
-    rules_dependencies: dict[Rule, set[Rule]],
+    rules_dependencies: RulesDependencies,
     state: _TarjanState,
     namespace_manager: NamespaceManager | None = None,
 ) -> Iterable[Graph]:
@@ -154,13 +156,11 @@ def stratify_rule(
         yield scc
 
 
-def stratify_rules(rules: Graph) -> Iterable[Graph]:
+def stratify_rules(rules: Graph, rules_dependencies: RulesDependencies | None = None) -> Iterable[Graph]:
     state = _TarjanState()
 
-    rules_dependencies: dict[Rule, set[Rule]] = {}
-
-    for rule in rules:
-        rules_dependencies[rule] = firing_rules(cast(Rule, rule), rules)
+    if rules_dependencies is None:
+        rules_dependencies = get_rules_dependencies(rules)
 
     for rule in rules:
         if rule not in state.index:
@@ -173,44 +173,44 @@ def is_negative(rule: Rule) -> bool:
     return any(p == NEGATION_PREDICATE for s, p, o in get_head(rule))
 
 
-def with_guard(facts: Graph, rules: Iterable[Triple]) -> Iterable[Triple]:
-    # TODO: the rules depend on each other, so we need to make sure
-    # that each one has been executed after the one it depends on for each
-    # element picked by a guard clause. Will it be enough? In what cases?
-    for rule in rules:
-        if is_negative(rule):
-            raise NotImplementedError
-        head = get_head(rule)
-        body = get_body(rule)
-        deps = set(clause_dependencies(head, body))
-        if len(deps) > 1:
-            raise NotImplementedError
-        if len(deps) == 0:
-            yield from single_pass(facts, rules)
-        else:
-            unmatched = deps.pop()
-            g = Graph()
-            guard = QuotedGraph(store=g.store, identifier=BNode())
-            rest = QuotedGraph(store=g.store, identifier=BNode())
+def with_guard(facts: Graph, rule: Iterable[Triple]) -> Iterable[Triple]:
+    if is_negative(rule):
+        # TODO: can we handle negative recursive?
+        raise NotImplementedError
 
-            add_triples(guard, unmatched)
+    head = get_head(rule)
+    body = get_body(rule)
+    deps = set(clause_dependencies(head, body))
+    if len(deps) > 1:
+        raise NotImplementedError
+    if len(deps) == 0:
+        #yield from single_pass(facts, rules)
+        raise AssertionError
 
-            for triple in get_head(rule):
-                if triple not in unmatched:
-                    rest.add(triple)
+    unmatched = deps.pop()
+    g = Graph()
+    guard = QuotedGraph(store=g.store, identifier=BNode())
+    rest = QuotedGraph(store=g.store, identifier=BNode())
 
-            assert len(guard) > 0
-            guard_facts = Graph()
-            old_inferred = Graph()
-            add_triples(guard_facts, single_rule((guard, LOG.implies, guard), facts))
-            add_triples(old_inferred, single_rule((rest, LOG.implies, rest), facts)) # Not really inferred, but still
+    add_triples(guard, unmatched)
 
-            all_inferred = ConjunctiveGraph()
-            for _ in range(len(guard_facts) // len(guard)):
-                inferred = Graph(store=all_inferred.store)
-                add_triples(inferred, single_rule(rule, guard_facts + old_inferred))
-                old_inferred = inferred
-            yield from all_inferred
+    for triple in get_head(rule):
+        if triple not in unmatched:
+            rest.add(triple)
+
+    guard_facts = Graph()
+    old_inferred = Graph()
+    all_inferred = ConjunctiveGraph()
+
+    assert len(guard) > 0
+    add_triples(guard_facts, single_rule(facts, (guard, LOG.implies, guard)))
+    add_triples(old_inferred, single_rule(facts, (rest, LOG.implies, rest))) # Not really inferred, but still
+
+    for _ in range(len(guard_facts) // len(guard)):
+        inferred = Graph(store=all_inferred.store)
+        add_triples(inferred, single_rule(guard_facts + old_inferred, rule))
+        old_inferred = inferred
+    yield from all_inferred
 
 
 def create_positive_rule(rule: Triple) -> tuple[Rule, Rule]:
@@ -235,37 +235,38 @@ def create_positive_rule(rule: Triple) -> tuple[Rule, Rule]:
     return positive_rule, non_negative_rule
 
 
-def negative_rules(facts: Graph, rules: Graph) -> Iterable[Triple]:
-    rule = only_one(rules)
+def negative_rule(facts: Graph, rule: Graph) -> Iterable[Triple]:
     positive_rule, non_negative_rule = create_positive_rule(rule)
-    results = set(single_rule(positive_rule, facts))
-    all_results = set(single_rule(non_negative_rule, facts))
+    results = set(single_rule(facts, positive_rule))
+    all_results = set(single_rule(facts, non_negative_rule))
     yield from (all_results - results)
 
 
-def stratified(facts: Graph, rules: Graph) -> Graph:
+def stratified_rule(facts: Graph, rule: Triple) -> Iterable[Triple]:
+    recursive = head_depends_on_body(get_head(rule), get_body(rule))
+    if recursive:
+        method = with_guard
+    elif is_negative(rule):
+        method = negative_rule
+    else:
+        method = single_rule
+    yield from method(facts, rule)
+
+
+def _stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
     closure = ConjunctiveGraph()
     closure += facts
-    inferred = Graph(store=closure.store)
-    for i, strata in enumerate(stratify_rules(rules)):
-        rule = next(iter(strata))
-        recursive = len(strata) > 1 or head_depends_on_body(get_head(rule), get_body(rule))
-        if is_negative(rule) and len(strata) == 1:
-            method = negative_rules
-        else:
-            method = with_guard if recursive else single_pass
+    rules_dependencies = get_rules_dependencies(rules)
+    for i, strata in enumerate(stratify_rules(rules, rules_dependencies)):
+        for rule in strata:
+            print("strata", i, "rules", len(strata))
+            print(strata.serialize(format="n3"))
+            inferred = Graph(store=closure.store)
+            add_triples(inferred, stratified_rule(closure, rule))
+            yield from inferred
+            print(inferred.serialize(format="n3"))
 
-        print("strata", i)
-        print("rules")
-        print(strata.serialize(format="n3"))
 
-        # We don't add to inferred directly because then
-        # new facts will be available in the same strata due
-        # to yields, and we don't need that (maybe we don't care though if we do)
-        new_inferred = Graph()
-        for new_triple in method(closure, strata):
-            new_inferred.add(new_triple)
-        print("inferred")
-        print(new_inferred.serialize(format="n3"))
-        inferred += new_inferred
-    return inferred
+def stratified(facts: Graph, rules: Graph) -> Graph():
+    g = Graph()
+    return add_triples(g, _stratified(facts, rules))
