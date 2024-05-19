@@ -6,7 +6,7 @@
 
 [] a test:C ;
    p:start 0 ;
-    p:end 1 ;
+    p:end 1 .
 
 [] p:start 1 ;
    p:end 2 ;
@@ -34,10 +34,13 @@
       p:start ?a ;
       p:end ?c .
 } log:impliedBy {
+  # Guard
   [] a test:C ;
       p:start ?a ;
+  # Not guard and not recursive
       p:end ?b .
 
+  # Recursive
   [] a test:B ;
       p:start ?b ;
       p:end ?c .

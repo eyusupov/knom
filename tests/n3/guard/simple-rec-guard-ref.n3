@@ -2,17 +2,18 @@
 @prefix p: <http://example.com/parser#> .
 @prefix test: <http://example.com/test#> .
 
-{
-  [] a p:Repeat_a_1 ;
-      p:end ?c ;
-      p:start ?a .
-} log:impliedBy {
-  [] a p:Repeat_a_1 ;
-      p:end ?c ;
-      p:start ?b .
+[] a test:C ;
+   p:start 0 ;
+    p:end 2 .
 
-  [] a test:C ;
-      p:end ?b ;
-      p:start ?a .
-}.
+[] a test:C ;
+   p:start 0 ;
+    p:end 3 .
 
+[] a test:C ;
+   p:start 0 ;
+    p:end 4 .
+
+[] a test:C ;
+   p:start 0 ;
+    p:end 5 .

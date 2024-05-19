@@ -1,0 +1,13 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <#>.
+
+[] a mf:Manifest ;
+  mf:name "Tests for rules with recursion";
+  mf:entries (
+    [
+      mf:name "Simple guarded recursion";
+      mf:action <guard/simple-rec-guard.n3>;
+      mf:result  <guard/simple-rec-guard-ref.n3>
+    ]
+  ).

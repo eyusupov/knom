@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-from itertools import chain
 from typing import cast
 
 from rdflib import BNode, Graph, URIRef, Variable
@@ -9,19 +8,13 @@ from rdflib.term import Node
 
 from knom import (
     LOG,
-    assign,
     get_body,
     get_head,
-    get_next_head,
-    instantiate_bnodes,
-    mask,
-    match_rule,
-    fire_rule,
     single_pass,
     single_rule,
 )
-from knom.util import only_one
 from knom.typing import Bindings, Triple
+from knom.util import only_one
 
 Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
 RuleIndex = dict[Rule, int]
@@ -177,9 +170,7 @@ def stratify_rules(rules: Graph) -> Iterable[Graph]:
                 for triple in node:
                     cg.add((*triple, node))
 
-    print("total rules", len(rules))
     for i, rule in enumerate(rules):
-        print("rule", i)
         rules_dependencies[rule] = firing_rules(cast(Rule, rule), rules, cg)
 
     for rule in rules:
@@ -196,29 +187,45 @@ def with_guard(facts: Graph, rules: Iterable[Triple]) -> Iterable[Triple]:
     # TODO: the rules depend on each other, so we need to make sure
     # that each one has been executed after the one it depends on for each
     # element picked by a guard clause. Will it be enough? In what cases?
-    print("executing with guard")
     for rule in rules:
         if is_negative(rule):
             raise NotImplementedError
+        head = get_head(rule)
         body = get_body(rule)
-        deps = set(clause_dependencies(get_head(rule), body))
+        deps = set(clause_dependencies(head, body))
         if len(deps) > 1:
             raise NotImplementedError
         if len(deps) == 0:
             yield from single_pass(facts, rules)
         else:
-            guard = set(deps.pop())
+            unmatched = deps.pop()
+            g = Graph()
+            guard = QuotedGraph(store=g.store, identifier=BNode())
+            rest = QuotedGraph(store=g.store, identifier=BNode())
+
+            for triple in unmatched:
+                guard.add(triple)
+
+            for triple in get_head(rule):
+                if triple not in unmatched:
+                    rest.add(triple)
+
             assert len(guard) > 0
-            removed_facts = set()
-            next_head, remaining = get_next_head((None, None, None), guard, {})
-            for bindings in match_rule(next_head, remaining, facts, {}):
-                for triple in guard:
-                    fact = assign(triple, bindings)
-                    facts.remove(fact)
-                    removed_facts.add(fact)
-                yield from fire_rule(rule, bindings)
-            for fact in removed_facts:
-                facts.add(fact)
+            guard_facts = Graph()
+            old_inferred = Graph()
+            for fact in single_rule((guard, LOG.implies, guard), facts):
+                guard_facts.add(fact)
+
+            for fact in single_rule((rest, LOG.implies, rest), facts):
+                old_inferred.add(fact) # Not really inferred
+
+            all_inferred = ConjunctiveGraph()
+            for _ in range(len(guard_facts) // len(guard)):
+                inferred = Graph(store=all_inferred.store)
+                for fact in single_rule(rule, guard_facts + old_inferred):
+                    inferred.add(fact)
+                old_inferred = inferred
+            yield from all_inferred
 
 
 def create_positive_rule(rule: Triple) -> tuple[Rule, Rule]:
@@ -255,17 +262,19 @@ def stratified(facts: Graph, rules: Graph) -> Graph:
     closure = ConjunctiveGraph()
     closure += facts
     inferred = Graph(store=closure.store)
-    for i, strata in enumerate(stratify_rules(rules)):
-        print("strata start", i, len(strata))
-        print(strata.serialize(format="n3"))
+    for strata in stratify_rules(rules):
         rule = next(iter(strata))
         recursive = len(strata) > 1 or head_depends_on_body(get_head(rule), get_body(rule))
         if is_negative(rule) and len(strata) == 1:
             method = negative_rules
         else:
             method = with_guard if recursive else single_pass
+
+        # We don't add to inferred directly because then
+        # new facts will be available in the same strata due
+        # to yields, and we don't need that (maybe we don't care though if we do)
+        new_inferred = Graph()
         for new_triple in method(closure, strata):
-            from knom.util import print_triple
-            print("inferred", print_triple(new_triple))
-            inferred.add(new_triple)
+            new_inferred.add(new_triple)
+        inferred += new_inferred
     return inferred
