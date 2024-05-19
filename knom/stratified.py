@@ -14,7 +14,7 @@ from knom import (
     single_rule,
 )
 from knom.typing import Bindings, Triple
-from knom.util import only_one
+from knom.util import add_triples, only_one
 
 Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
 RuleIndex = dict[Rule, int]
@@ -193,8 +193,7 @@ def with_guard(facts: Graph, rules: Iterable[Triple]) -> Iterable[Triple]:
             guard = QuotedGraph(store=g.store, identifier=BNode())
             rest = QuotedGraph(store=g.store, identifier=BNode())
 
-            for triple in unmatched:
-                guard.add(triple)
+            add_triples(guard, unmatched)
 
             for triple in get_head(rule):
                 if triple not in unmatched:
@@ -203,17 +202,13 @@ def with_guard(facts: Graph, rules: Iterable[Triple]) -> Iterable[Triple]:
             assert len(guard) > 0
             guard_facts = Graph()
             old_inferred = Graph()
-            for fact in single_rule((guard, LOG.implies, guard), facts):
-                guard_facts.add(fact)
-
-            for fact in single_rule((rest, LOG.implies, rest), facts):
-                old_inferred.add(fact) # Not really inferred
+            add_triples(guard_facts, single_rule((guard, LOG.implies, guard), facts))
+            add_triples(old_inferred, single_rule((rest, LOG.implies, rest), facts)) # Not really inferred, but still
 
             all_inferred = ConjunctiveGraph()
             for _ in range(len(guard_facts) // len(guard)):
                 inferred = Graph(store=all_inferred.store)
-                for fact in single_rule(rule, guard_facts + old_inferred):
-                    inferred.add(fact)
+                add_triples(inferred, single_rule(rule, guard_facts + old_inferred))
                 old_inferred = inferred
             yield from all_inferred
 
@@ -252,7 +247,7 @@ def stratified(facts: Graph, rules: Graph) -> Graph:
     closure = ConjunctiveGraph()
     closure += facts
     inferred = Graph(store=closure.store)
-    for strata in stratify_rules(rules):
+    for i, strata in enumerate(stratify_rules(rules)):
         rule = next(iter(strata))
         recursive = len(strata) > 1 or head_depends_on_body(get_head(rule), get_body(rule))
         if is_negative(rule) and len(strata) == 1:
@@ -260,11 +255,17 @@ def stratified(facts: Graph, rules: Graph) -> Graph:
         else:
             method = with_guard if recursive else single_pass
 
+        print("strata", i)
+        print("rules")
+        print(strata.serialize(format="n3"))
+
         # We don't add to inferred directly because then
         # new facts will be available in the same strata due
         # to yields, and we don't need that (maybe we don't care though if we do)
         new_inferred = Graph()
         for new_triple in method(closure, strata):
             new_inferred.add(new_triple)
+        print("inferred")
+        print(new_inferred.serialize(format="n3"))
         inferred += new_inferred
     return inferred
