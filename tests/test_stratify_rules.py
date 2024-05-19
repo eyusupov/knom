@@ -1,6 +1,6 @@
 from rdflib import Graph, URIRef
 
-from knom.stratified import stratify_rules
+from knom.stratified import stratify_rules, get_rules_dependencies
 from knom.util import print_rule
 
 from . import EX, generate_tests_from_manifests, split_rules_and_facts
@@ -12,7 +12,7 @@ def pytest_generate_tests(metafunc) -> None:  # noqa: ANN001
     generate_tests_from_manifests(MANIFEST_PATH, metafunc)
 
 
-def test_single_pass(action: URIRef, result: URIRef) -> None:
+def test_stratify_rules(action: URIRef, result: URIRef) -> None:
     g = Graph().parse(location=action, format="n3")
     rules, facts = split_rules_and_facts(g)
     stratified_rules = stratify_rules(rules)

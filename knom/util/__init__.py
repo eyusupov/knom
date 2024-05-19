@@ -34,6 +34,11 @@ def bnode_name(bnode: BNode) -> str:
     return bnode_names[bnode]
 
 
+def add_triples(g: Graph, triples: Iterable[Triple]) -> Graph:
+    for triple in triples:
+        g.add(triple)
+    return g
+
 
 def node_repr(
     node: Node | None, namespace_manager: NamespaceManager | None = None
