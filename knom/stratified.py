@@ -103,7 +103,7 @@ def head_depends_on_body(
     return True
 
 
-def firing_rules(rule_with_head: Rule, rules_with_body: Graph, cg: ConjunctiveGraph) -> set[Rule]:
+def firing_rules(rule_with_head: Rule, rules_with_body: Graph) -> set[Rule]:
     head = get_head(rule_with_head)
 
     result = set()
@@ -163,15 +163,8 @@ def stratify_rules(rules: Graph) -> Iterable[Graph]:
 
     rules_dependencies: dict[Rule, set[Rule]] = {}
 
-    cg = ConjunctiveGraph()
-    for s, _, o in rules:
-        for node in s, o:
-            if isinstance(node, Graph):
-                for triple in node:
-                    cg.add((*triple, node))
-
-    for i, rule in enumerate(rules):
-        rules_dependencies[rule] = firing_rules(cast(Rule, rule), rules, cg)
+    for rule in rules:
+        rules_dependencies[rule] = firing_rules(cast(Rule, rule), rules)
 
     for rule in rules:
         if rule not in state.index:
