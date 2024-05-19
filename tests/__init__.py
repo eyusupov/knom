@@ -66,17 +66,6 @@ def generate_tests_from_manifests(path: str, metafunc) -> None:  # noqa: ANN001
         metafunc.parametrize("action, result", parameters, ids=names)
 
 
-def split_rules_and_facts(graph: Graph) -> tuple[Graph, Graph]:
-    rules = Graph(namespace_manager=graph.namespace_manager)
-    facts = Graph(namespace_manager=graph.namespace_manager)
-    for s, p, o in graph:
-        if p in [LOG.implies, LOG.impliedBy]:
-            rules.add((s, p, o))
-        else:
-            facts.add((s, p, o))
-    return (rules, facts)
-
-
 def prettify(g: Graph) -> set[str]:
     return {" ".join(n.n3() for n in triples) for triples in g}
 

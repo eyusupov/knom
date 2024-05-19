@@ -127,3 +127,14 @@ def compact_bnodes(g: Graph, head: set[Triple]) -> set[Triple]:
 
     print("compacted from", len(head), "to", len(compacted_head))
     return compacted_head
+
+
+def split_rules_and_facts(graph: Graph) -> tuple[Graph, Graph]:
+    rules = Graph(namespace_manager=graph.namespace_manager)
+    facts = Graph(namespace_manager=graph.namespace_manager)
+    for s, p, o in graph:
+        if p in [LOG.implies, LOG.impliedBy]:
+            rules.add((s, p, o))
+        else:
+            facts.add((s, p, o))
+    return (rules, facts)

@@ -2,8 +2,9 @@ from rdflib import Graph, URIRef
 
 from knom.stratified import stratify_rules, get_rules_dependencies
 from knom.util import print_rule
+from knom.util import split_rules_and_facts
 
-from . import EX, generate_tests_from_manifests, split_rules_and_facts
+from . import EX, generate_tests_from_manifests
 
 MANIFEST_PATH = "tests/n3/stratification-manifests.n3"
 
