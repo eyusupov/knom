@@ -103,12 +103,12 @@ def head_sort_key(
     s, p, o = clause
 
     return (
+        p not in BUILTINS,
+        p == STRING.ord,
         ps == s,
         pp == p,
         po == o,
-        p not in BUILTINS,
         sum(1 if node in bindings else 0 for node in clause),
-        p == STRING.ord,
     )
 
 
