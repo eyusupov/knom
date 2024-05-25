@@ -213,9 +213,16 @@ def with_guard(facts: Graph, rule1: Rule, rule2: Rule | None = None) -> Iterable
     # Guard facts miss the first elements (queried in next line), so the consecutive recursions will not recreate new nodes once more
     add_triples(old_inferred, single_rule(facts, (rest, LOG.implies, rest))) # Not really inferred, but still
 
-    for _ in range(len(guard_facts) // len(guard)):
-        inferred = Graph(store=all_inferred.store)
+    print("guard facts")
+    print(guard_facts.serialize(format="n3"))
+
+    for i in range(len(guard_facts) // len(guard)):
+        inferred = Graph()
+        print("round", i, len(guard_facts), len(old_inferred))
+        print("old inferred")
+        print(old_inferred.serialize(format="n3"))
         add_triples(inferred, single_rule(guard_facts + old_inferred, rule1))
+        all_inferred += inferred
         old_inferred = inferred
     yield from all_inferred
 
@@ -243,6 +250,7 @@ def create_positive_rule(rule: Rule) -> tuple[Rule, Rule]:
 
 
 def negative_rule(facts: Graph, rule: Rule) -> Iterable[Triple]:
+    from knom.util import print_rule, print_graph, print_triple, node_repr
     positive_rule, non_negative_rule = create_positive_rule(rule)
     results = set(single_rule(facts, positive_rule))
     all_results = set(single_rule(facts, non_negative_rule))
@@ -260,6 +268,7 @@ def stratified_rule(facts: Graph, rule: Triple, rules_dependencies: RulesDepende
         method = negative_rule
     else:
         method = single_rule
+    print("using", method)
     yield from method(facts, rule)
 
 def euler(strata: set[Rule], triggered_rules: RulesDependencies) -> Iterable[Rule]:
@@ -298,7 +307,7 @@ def mutual(closure: Graph, strata: set[Rule], triggered_rules: RulesDependencies
     rule1 = rules[0]
     for i, rule in enumerate(rules[1:]):
         print(i)
-        yield from with_guard(closure, rule, rule1)
+        yield from with_guard(closure, rule1, rule)
         rule1 = rule
 
 def _stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
@@ -316,15 +325,17 @@ def _stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
     for i, strata in enumerate(stratify_rules(rules, rules_dependencies)):
         print("strata", i, "rules", len(strata))
         print(strata.serialize(format="n3"))
-        inferred = Graph(store=closure.store)
+        new_inferred = Graph(namespace_manager=facts.namespace_manager)
 
         if len(strata) > 1:
-            add_triples(inferred, mutual(closure, set(strata), triggered_rules))
-            yield from inferred
+            add_triples(new_inferred, mutual(closure, set(strata), triggered_rules))
+            yield from new_inferred
         else:
-            add_triples(inferred, stratified_rule(closure, next(iter(strata)), rules_dependencies))
-            yield from inferred
-        print(inferred.serialize(format="n3"))
+            add_triples(new_inferred, stratified_rule(closure, next(iter(strata)), rules_dependencies))
+            yield from new_inferred
+        print("inferred")
+        print(new_inferred.serialize(format="n3"))
+        closure += new_inferred
 
 
 def stratified(facts: Graph, rules: Graph) -> Graph():

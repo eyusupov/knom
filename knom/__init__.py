@@ -4,9 +4,9 @@ from typing import cast
 from rdflib import BNode, Graph, Literal, URIRef, Variable
 from rdflib.term import Node
 
-from knom.builtins import BUILTINS, STRING
+from knom.builtins import BUILTINS, STRING, MATH
 from knom.typing import Bindings, Mask, Triple
-from knom.util import LOG
+from knom.util import LOG, print_triple
 
 
 def get_head(rule: Triple) -> Variable | Graph:
@@ -122,6 +122,8 @@ def get_next_head(
     next_head = max(
         head, key=lambda triple: head_sort_key(prev_clause, triple, bindings)
     )
+    if next_head:
+        print("head clause:", print_triple(next_head), "bindings: ", bindings)
     remaining = head.copy()
     remaining.remove(next_head)
     return next_head, remaining
@@ -190,6 +192,7 @@ def fire_rule(rule: Triple, bindings: Bindings) -> Iterator[Triple]:
 
 
 def single_rule(facts: Graph, rule: Triple) -> Iterator[Triple]:
+    print("single_rule")
     head_graph = get_head(rule)
     assert isinstance(head_graph, Graph)
     head = set(head_graph)
