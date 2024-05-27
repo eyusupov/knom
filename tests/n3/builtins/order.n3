@@ -1,0 +1,23 @@
+@prefix : <http://example.com/>.
+
+# ++: input argument (bound, fully grounded)
+# +: input argument (bound, possibly not fully grounded)
+# -: output argument (bounded or not bounded)
+# --: output argument (not bounded)
+# ?: either providing input or accepting output, or both.
+# [*]: modifier indicating that an argument can have multiple solutions. 
+
+{
+  ?in :p ?out.
+  ?inOut :p ?inOut.
+} => {
+}.
+
+
+{
+  $s1? :x :a.
+  $s1? :p $o1?.
+  $o1? :y :b.
+} => {
+  $s1 :x $o1.
+}.

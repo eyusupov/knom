@@ -5,17 +5,6 @@
 [] a mf:Manifest ;
   mf:name "Positive non-recursive rules suitable for fixpoint evaluation";
   mf:entries (
-    # TODO: these are not non-recursive
-    #[
-    #  mf:name "Rules that depend on each other produce all results";
-    #  mf:action <positive-nonrecursive-rules/dependend-productions.n3>;
-    #  mf:result <positive-nonrecursive-rules/dependend-productions-ref.n3>;
-    #]
-    #[
-    #  mf:name "Rules with blank nodes that depend on each other produce all results";
-    #  mf:action <positive-nonrecursive-rules/dependend-productions-bnodes.n3>;
-    #  mf:result <positive-nonrecursive-rules/dependend-productions-bnodes-ref.n3>;
-    #]
     [
       mf:name "Initial facts can be needed after the first iteration";
       mf:action <positive-nonrecursive-rules/facts-after-first-loop.n3>;
