@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Iterable, Iterator
 from hashlib import sha256
 from typing import cast
@@ -9,6 +10,7 @@ from knom.builtins import BUILTINS, STRING
 from knom.typing import Bindings, Mask, Triple
 from knom.util import LOG, print_triple
 
+logger = logging.getLogger(__name__)
 
 def get_head(rule: Triple) -> Variable | Graph:
     s, p, o = rule
@@ -111,7 +113,7 @@ def head_sort_key(
         po == o,
         sum(1 if node in bindings else 0 for node in clause),
     )
-    #print("key", print_triple(clause), key)
+    logger.debug("key %s %s", print_triple(clause), key)
     return key
 
 
@@ -126,8 +128,8 @@ def get_next_head(
     next_head = max(
         head, key=lambda triple: head_sort_key(prev_clause, triple, bindings)
     )
-    #if next_head:
-    #    print("head clause:", print_triple(next_head), "bindings: ", bindings)
+    if next_head:
+        logger.debug("head clause: %s, bindings %s", next_head, bindings)
     remaining = head.copy()
     remaining.remove(next_head)
     return next_head, remaining
@@ -136,7 +138,7 @@ def get_next_head(
 def match_rule(
     head_clause: Triple, head: set[Triple], facts: Graph, bindings: Bindings
 ) -> Iterator[Bindings]:
-    #print("match_rule")
+    logger.debug("match_rule")
     if head_clause is None:
         yield bindings
     else:
@@ -201,7 +203,7 @@ def fire_rule(rule: Triple, bindings: Bindings) -> Iterator[Triple]:
 
 
 def single_rule(facts: Graph, rule: Triple) -> Iterator[Triple]:
-    print("single_rule")
+    logger.debug("single_rule")
     head_graph = get_head(rule)
     assert isinstance(head_graph, Graph)
     head = set(head_graph)

@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Iterable
 from typing import cast
 
@@ -14,7 +15,9 @@ from knom import (
 )
 from knom.builtins import BUILTINS
 from knom.typing import Bindings, Triple
-from knom.util import add_triples, print_rule, print_triple
+from knom.util import add_triples
+
+logger = logging.getLogger(__name__)
 
 Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
 RulesDependencies = dict[Rule, set[Rule]]
@@ -206,20 +209,20 @@ def with_guard(facts: Graph, rule: Rule) -> Iterable[Triple]:
     all_inferred = ConjunctiveGraph()
 
     assert len(guard) > 0
-    print("querying guard")
+    logger.debug("querying guard")
     add_triples(guard_facts, single_rule(facts, (guard, LOG.implies, guard)))
     # Guard facts miss the first elements (queried in next line), so the consecutive recursions will not recreate new nodes once more
-    print("querying rest")
+    logger.debug("querying rest")
     add_triples(old_inferred, single_rule(facts, (rest, LOG.implies, rest))) # Not really inferred, but still
 
-    print("guard facts")
-    print(guard_facts.serialize(format="n3"))
+    logger.debug("guard facts")
+    logger.debug(guard_facts.serialize(format="n3"))
 
     for i in range(len(guard_facts) // len(guard)):
         inferred = Graph()
-        print("round", i, len(guard_facts), len(old_inferred))
-        print("old inferred")
-        print(old_inferred.serialize(format="n3"))
+        logger.debug("round %i %i %i", i, len(guard_facts), len(old_inferred))
+        logger.debug("old inferred")
+        logger.debug(old_inferred.serialize(format="n3"))
         add_triples(inferred, single_rule(guard_facts + old_inferred, rule))
         old_len = len(all_inferred)
         all_inferred += inferred
@@ -253,24 +256,32 @@ def create_positive_rule(rule: Rule) -> tuple[Rule, Rule]:
 
 def negative_rule(facts: Graph, rule: Rule) -> Iterable[Triple]:
     positive_rule, non_negative_rule = create_positive_rule(rule)
-    results = set(single_rule(facts, positive_rule))
-    all_results = set(single_rule(facts, non_negative_rule))
-    # TODO: we probably need to handle difference in bnode ids here.
-    # fixpoint algorithm will work then
-    # fact, rule, bnode position -> bnode identifier
-    yield from (all_results - results)
+
+    rules_dependencies: RulesDependencies = {
+        positive_rule: set(),
+        non_negative_rule: set()
+    }
+    if head_depends_on_body(get_head(positive_rule), get_body(positive_rule)):
+        rules_dependencies[positive_rule].add(positive_rule)
+
+    results = set(stratified_rule(facts, positive_rule, rules_dependencies))
+
+    if head_depends_on_body(get_head(non_negative_rule), get_body(non_negative_rule)):
+        rules_dependencies[non_negative_rule].add(non_negative_rule)
+    all_results = set(stratified_rule(facts, non_negative_rule, rules_dependencies))
+    yield from all_results - results
 
 
 def stratified_rule(facts: Graph, rule: Triple, rules_dependencies: RulesDependencies) -> Iterable[Triple]:
     recursive = rule in rules_dependencies[rule]
     has_bnodes = any(isinstance(n, BNode) for triple in get_body(rule) for n in triple)
-    if len(get_head(rule)) > 0 and recursive and has_bnodes:
-        method = with_guard
-    elif is_negative(rule):
+    if is_negative(rule):
         method = negative_rule
+    elif len(get_head(rule)) > 0 and recursive and has_bnodes:
+        method = with_guard
     else:
         method = single_rule
-    print("using", method)
+    logger.debug("using %s", method)
     yield from method(facts, rule)
 
 
@@ -281,9 +292,8 @@ def walk(facts: Graph, strata: list[Rule], triggered_rules: RulesDependencies) -
         rule = rules.pop(0)
         new_inferred = Graph(namespace_manager=facts.namespace_manager)
         add_triples(new_inferred, stratified_rule(facts + all_inferred, rule, triggered_rules))
-        print("inferred")
-        for triple in new_inferred:
-            print(print_triple(triple))
+        logger.debug("inferred")
+        logger.debug(new_inferred.serialize(format="n3"))
         old_len = len(all_inferred)
         all_inferred += new_inferred
         if len(all_inferred) == old_len:
@@ -310,10 +320,10 @@ def _stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
             triggered_rules[firing_rule].add(rule)
 
     for i, strata in enumerate(stratify_rules(rules, rules_dependencies)):
-        print("strata", i, "rules", len(strata))
+        logger.debug("strata %i rules %i", i, len(strata))
         g = Graph(namespace_manager=rules.namespace_manager)
         add_triples(g, strata)
-        print(g.serialize(format='n3'))
+        logger.debug(g.serialize(format="n3"))
 
         new_inferred = Graph(namespace_manager=facts.namespace_manager)
         if len(strata) > 1:
@@ -322,8 +332,8 @@ def _stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
             add_triples(new_inferred, stratified_rule(closure, next(iter(strata)), rules_dependencies))
         yield from new_inferred
         closure += new_inferred
-        print("inferred")
-        print(new_inferred.serialize(format="n3"))
+        logger.debug("inferred")
+        logger.debug(new_inferred.serialize(format="n3"))
 
 
 def stratified(facts: Graph, rules: Graph) -> Graph():

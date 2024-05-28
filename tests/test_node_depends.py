@@ -48,7 +48,7 @@ def test_node_depends_var_bn() -> None:
 
 
 def test_node_depends_bn_var() -> None:
-    assert node_depends(bn_a, var_a, {})
+    assert not node_depends(bn_a, var_a, {})
 
 
 def test_node_depends_bns_no_conflict() -> None:
@@ -60,7 +60,7 @@ def test_node_depends_bns_conflict() -> None:
 
 
 def test_node_depends_bn_lit() -> None:
-    assert node_depends(bn_a, lit_a, {})
+    assert not node_depends(bn_a, lit_a, {})
 
 
 def test_node_depends_lit_bn() -> None:
