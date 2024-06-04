@@ -1,3 +1,5 @@
+import logging
+
 from rdflib import Graph, URIRef
 
 from knom.stratified import stratified
@@ -8,6 +10,8 @@ from . import (
     postprocess,
 )
 
+logging.getLogger("knom").setLevel(logging.DEBUG)
+logging.getLogger("knom.stratified").setLevel(logging.DEBUG)
 
 def pytest_generate_tests(metafunc) -> None:  # noqa: ANN001
     generate_tests_from_manifests(

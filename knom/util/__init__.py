@@ -67,14 +67,14 @@ def print_triple(
 
 def print_graph(formula: Graph) -> str:
     return (
-        "{"
-        + ". ".join(
+        "{\n  "
+        + ".\n  ".join(
             [
                 print_triple(c, namespace_manager=formula.namespace_manager)
                 for c in formula
             ]
         )
-        + "}"
+        + "\n}"
     )
 
 
@@ -83,9 +83,9 @@ def print_rule(rule: Triple) -> str:
     assert isinstance(s, Graph)
     assert isinstance(o, Graph)
     if p == LOG.implies:
-        return f"{print_graph(s)} => {print_graph(o)}"
+        return f"{print_graph(s)} => {print_graph(o)}."
     if p == LOG.impliedBy:
-        return f"{print_graph(o)} => {print_graph(s)}"
+        return f"{print_graph(o)} => {print_graph(s)}."
     raise ValueError
 
 

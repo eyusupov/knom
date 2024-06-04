@@ -70,7 +70,7 @@ def test_clause_dependencies_bns_in_different_positions(
     body.add(bna_triple)
     head.add(bna_triple)
     head.add(bnb_triple)
-    check_result(head, body, [[bna_triple], [bnb_triple]])
+    check_result(head, body, [[bnb_triple]])
 
 
 def test_clause_dependencies_extra_bns_in_head(head: Graph, body: Graph) -> None:
@@ -86,7 +86,7 @@ def test_clause_dependencies_extra_bns_in_body(head: Graph, body: Graph) -> None
     body.add(bnb_triple)
     head.add(bna_triple)
 
-    check_result(head, body, [[]])
+    check_result(head, body, [])
 
 
 def test_clause_dependencies_real_case_debug(head: Graph, body: Graph) -> None:

@@ -10,4 +10,24 @@
       mf:action <guard/simple-rec-guard.n3>;
       mf:result  <guard/simple-rec-guard-ref.n3>
     ]
+    [
+      mf:name "Exponential";
+      mf:action <guard/exp.n3>;
+      mf:result  <guard/exp-ref.n3>
+    ]
+    [
+      mf:name "Loop";
+      mf:action <guard/loop.n3>;
+      mf:result  <guard/loop-ref.n3>
+    ]
+    [
+      mf:name "Rules that depend on each other produce all results";
+      mf:action <guard/dependend-productions.n3>;
+      mf:result <guard/dependend-productions-ref.n3>;
+    ]
+    [
+      mf:name "Rules with blank nodes that depend on each other produce all results";
+      mf:action <guard/dependend-productions-bnodes.n3>;
+      mf:result <guard/dependend-productions-bnodes-ref.n3>;
+    ]
   ).

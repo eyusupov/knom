@@ -1,4 +1,6 @@
+import logging
 from collections.abc import Iterable, Iterator
+from hashlib import sha256
 from typing import cast
 
 from rdflib import BNode, Graph, Literal, URIRef, Variable
@@ -6,8 +8,9 @@ from rdflib.term import Node
 
 from knom.builtins import BUILTINS, STRING
 from knom.typing import Bindings, Mask, Triple
-from knom.util import LOG
+from knom.util import LOG, print_triple
 
+logger = logging.getLogger(__name__)
 
 def get_head(rule: Triple) -> Variable | Graph:
     s, p, o = rule
@@ -102,7 +105,7 @@ def head_sort_key(
     ps, pp, po = prev_clause
     s, p, o = clause
 
-    return (
+    key = (
         p not in BUILTINS,
         p == STRING.ord,
         ps == s,
@@ -110,6 +113,9 @@ def head_sort_key(
         po == o,
         sum(1 if node in bindings else 0 for node in clause),
     )
+    logger.debug("key %s %s", print_triple(clause), key)
+    return key
+
 
 
 def get_next_head(
@@ -122,6 +128,8 @@ def get_next_head(
     next_head = max(
         head, key=lambda triple: head_sort_key(prev_clause, triple, bindings)
     )
+    if next_head:
+        logger.debug("head clause: %s, bindings %s", next_head, bindings)
     remaining = head.copy()
     remaining.remove(next_head)
     return next_head, remaining
@@ -130,6 +138,7 @@ def get_next_head(
 def match_rule(
     head_clause: Triple, head: set[Triple], facts: Graph, bindings: Bindings
 ) -> Iterator[Bindings]:
+    logger.debug("match_rule")
     if head_clause is None:
         yield bindings
     else:
@@ -150,10 +159,14 @@ def match_rule(
 
 
 def instantiate_bnodes(body: Graph, bindings: Bindings) -> None:
+    identifiers = [f"{node}:{binding}" for node, binding in sorted(bindings.items())]
+    base_path = "-".join(identifiers)
     for triple in body:
         for node in triple:
             if isinstance(node, BNode) and node not in bindings:
-                bindings[node] = BNode()
+                path = f"{base_path}-{node}"
+                id_ = sha256(path.encode("utf-8")).hexdigest()
+                bindings[node] = BNode(id_)
 
 
 def assign_node(node: Node, bindings: Bindings) -> Node:
@@ -190,6 +203,7 @@ def fire_rule(rule: Triple, bindings: Bindings) -> Iterator[Triple]:
 
 
 def single_rule(facts: Graph, rule: Triple) -> Iterator[Triple]:
+    logger.debug("single_rule")
     head_graph = get_head(rule)
     assert isinstance(head_graph, Graph)
     head = set(head_graph)
