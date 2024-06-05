@@ -2,6 +2,15 @@
 name = "knom"
 requires-python = ">=3.10"
 version = "0.0.1"
+dependencies = [
+  "rdflib"
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "rdflib-canon @ git+https://github.com/eyusupov/rdflib-canon"
+]
 
 [tool.pytest.ini_options]
 filterwarnings = [
