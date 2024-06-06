@@ -336,6 +336,6 @@ def _stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
         logger.debug(new_inferred.serialize(format="n3"))
 
 
-def stratified(facts: Graph, rules: Graph) -> Graph():
-    g = Graph()
+def stratified(facts: Graph, rules: Graph) -> Graph:
+    g = Graph(namespace_manager=facts.namespace_manager)
     return add_triples(g, _stratified(facts, rules))
