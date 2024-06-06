@@ -12,6 +12,7 @@ from knom.util import LOG, print_triple
 
 logger = logging.getLogger(__name__)
 
+
 def get_head(rule: Triple) -> Variable | Graph:
     s, p, o = rule
     if p == LOG.implies:
@@ -115,7 +116,6 @@ def head_sort_key(
     )
     logger.debug("key %s %s", print_triple(clause), key)
     return key
-
 
 
 def get_next_head(

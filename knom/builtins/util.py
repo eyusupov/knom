@@ -11,6 +11,4 @@ def _get_cmp_args(s: Node, o: Node, bindings: Bindings) -> tuple:
         return None, None
     assert isinstance(s_, Literal)
     assert isinstance(o_, Literal)
-    #assert isinstance(s_.value, str)
-    #assert isinstance(o_.value, str)
     return s_.value, o_.value

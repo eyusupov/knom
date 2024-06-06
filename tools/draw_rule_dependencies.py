@@ -26,4 +26,4 @@ stratas = stratify_rules(rules, rules_dependencies)
 for i, strata in enumerate(stratas, 1):
     dot.add_subgraph([print_rule(rule) for rule in strata], name=f'cluster_strata{i}', label=str(i))
 
-print(dot.draw(prog="dot", format="svg").decode('utf-8'))
+print(dot.draw(prog='dot', format='svg').decode('utf-8'))
