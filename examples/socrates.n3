@@ -1,0 +1,11 @@
+@prefix : <http://example.com>.
+
+:socrates :a :human.
+:human :a :mortal.
+
+{
+  ?x :a ?y.
+  ?y :a ?z
+} => {
+  ?x :a ?z 
+}.
