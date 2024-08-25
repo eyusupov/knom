@@ -6,14 +6,14 @@ from knom.util import split_rules_and_facts
 
 from . import EX, generate_tests_from_manifests
 
-MANIFEST_PATH = "tests/n3/stratification-manifests.n3"
+MANIFEST_PATH = "tests/n3/scoping-manifests.n3"
 
 
 def pytest_generate_tests(metafunc) -> None:  # noqa: ANN001
     generate_tests_from_manifests(MANIFEST_PATH, metafunc)
 
 
-def test_stratify_rules(action: URIRef, result: URIRef) -> None:
+def test_rules_with_scoping(action: URIRef, result: URIRef) -> None:
     g = Graph().parse(location=action, format="n3")
     rules, facts = split_rules_and_facts(g)
     stratified_rules = stratify_rules(rules)

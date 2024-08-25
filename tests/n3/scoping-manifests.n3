@@ -1,0 +1,38 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <#>.
+
+[] a mf:Manifest ;
+  mf:name "Tests for scoping";
+  mf:entries (
+    [
+      mf:name "Unquoting";
+      mf:action <scoping/unquoting.n3>;
+      mf:result <scoping/unquoting-ref.n3>
+    ]
+    [
+      mf:name "Graph term";
+      mf:action <scoping/graph-term.n3>;
+      mf:result <scoping/graph-term-ref.n3>
+    ]
+    [
+      mf:name "Graph term with variable";
+      mf:action <scoping/graph-term-var.n3>;
+      mf:result <scoping/graph-term-var-ref.n3>
+    ]
+    [
+      mf:name "Graph term all clauses match";
+      mf:action <scoping/graph-term-all-clauses-match.n3>;
+      mf:result <scoping/graph-term-all-clauses-match-ref.n3>
+    ]
+    [
+      mf:name "Graph term nested-var";
+      mf:action <scoping/graph-term-nested-var.n3>;
+      mf:result <scoping/graph-term-nested-var-ref.n3>
+    ]
+    [
+      mf:name "Graph term some clauses match";
+      mf:action <scoping/graph-term-some-clauses-match.n3>;
+      mf:result <scoping/graph-term-some-clauses-match-ref.n3>
+    ]
+  ).
