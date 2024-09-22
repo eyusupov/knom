@@ -1,0 +1,9 @@
+@prefix : <http://example.com/>.
+@prefix log: <http://www.w3.org/2000/10/swap/log#>.
+
+:steve :says { :a :b :c }.
+
+{
+  :steve :says ?what.
+  ?what log:includes { ?a _:b ?c }.
+} => { :something _:b ?c }.

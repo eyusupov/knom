@@ -39,8 +39,6 @@ def node_depends(body_node: Node, head_node: Node, bnodes: Bindings) -> bool:
     if isinstance(head_node, Variable | BNode):
         # Variable in head cannot match a produced blank node
         return not isinstance(body_node, BNode)
-    assert not isinstance(body_node, Graph)
-    assert not isinstance(head_node, Graph)
     return body_node == head_node
 
 
@@ -63,7 +61,7 @@ def clause_dependencies(
     # something => body
     # head => something2
     assert not isinstance(head, Variable)
-    assert not isinstance(body, Variable)
+    #assert not isinstance(body, Variable)
 
     complete_head = frozenset(head)
     complete_body = frozenset(body)
@@ -78,6 +76,9 @@ def clause_dependencies(
             return
         else:
             yield complete_head
+
+    if isinstance(body, Variable):
+        return body
 
     body_clauses = set(body)
     while len(body_clauses) > 0:

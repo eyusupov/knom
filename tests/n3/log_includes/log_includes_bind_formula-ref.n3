@@ -1,0 +1,5 @@
+@prefix : <http://example.com/>.
+
+:steve :says {
+    :a :b :c.
+}.

@@ -80,12 +80,20 @@ def print_graph(formula: Graph) -> str:
 
 def print_rule(rule: Triple) -> str:
     s, p, o = rule
-    assert isinstance(s, Graph)
-    assert isinstance(o, Graph)
+    if isinstance(s, Graph):
+        subj = print_triple(s)
+    else:
+        subj = node_repr(s)
+
+    if isinstance(o, Graph):
+        obj = print_triple(o)
+    else:
+        obj = node_repr(s)
+
     if p == LOG.implies:
-        return f"{print_graph(s)} => {print_graph(o)}."
+        return f"{subj} => {obj}"
     if p == LOG.impliedBy:
-        return f"{print_graph(o)} => {print_graph(s)}."
+        return f"{subj} <= {obj}"
     raise ValueError
 
 
