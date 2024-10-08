@@ -13,16 +13,16 @@ from knom.util import LOG, print_triple
 logger = logging.getLogger(__name__)
 
 
-def get_head(rule: Triple) -> Variable | Graph:
+def get_head(rule: Triple) -> Variable | BNode | Graph:
     s, p, o = rule
     if p == LOG.implies:
-        body_ = s
+        head = s
     elif p == LOG.impliedBy:
-        body_ = o
+        head = o
     else:
         raise AssertionError
-    assert isinstance(body_, Variable | Graph)
-    return body_
+    assert isinstance(head, Variable | BNode | Graph)
+    return head
 
 
 def get_body(rule: Triple) -> Variable | Graph:
