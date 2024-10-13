@@ -1,9 +1,9 @@
 from rdflib import RDF, BNode, Graph, Literal, Namespace, URIRef, Variable
 from rdflib.collection import Collection
-from rdflib.plugins.parsers.notation3 import N3Parser, SinkParser
 from rdflib_canon import CanonicalizedGraph
 
-from knom.util import LOG
+from knom.stratified import stratified
+from knom.util import split_rules_and_facts
 
 EX = Namespace("http://example.com/")
 var_a = Variable("a")
@@ -65,6 +65,12 @@ def generate_tests_from_manifests(path: str, metafunc) -> None:  # noqa: ANN001
             parameters.append((action, result))
         metafunc.parametrize("action, result", parameters, ids=names)
 
+def run_n3_tests(action: URIRef, result: URIRef) -> None:
+    action_graph = Graph().parse(location=action, format="n3")
+    rules, facts = split_rules_and_facts(action_graph)
+    output = stratified(facts, rules)
+    result_graph = Graph().parse(location=result, format="n3")
+    assert postprocess(output) == postprocess(result_graph)
 
 def prettify(g: Graph) -> set[str]:
     return {" ".join(n.n3() for n in triples) for triples in g}

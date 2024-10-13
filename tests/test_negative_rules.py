@@ -1,11 +1,8 @@
-from rdflib import Graph, Namespace, URIRef
-
-from knom.stratified import stratified
-from knom.util import split_rules_and_facts
+from rdflib import URIRef
 
 from . import (
     generate_tests_from_manifests,
-    postprocess,
+    run_n3_tests
 )
 
 
@@ -15,10 +12,5 @@ def pytest_generate_tests(metafunc) -> None:  # noqa: ANN001
     )
 
 
-def test_naive_fixpoint(action: URIRef, result: URIRef) -> None:
-    action_graph = Graph().parse(location=action, format="n3")
-    rules, facts = split_rules_and_facts(action_graph)
-    output = stratified(facts, rules)
-    result_graph = Graph().parse(location=result, format="n3")
-
-    assert postprocess(output) == postprocess(result_graph)
+def test_negative_rules(action: URIRef, result: URIRef) -> None:
+    run_n3_tests(action, result)
