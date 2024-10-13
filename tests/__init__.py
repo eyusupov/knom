@@ -3,7 +3,7 @@ from rdflib.collection import Collection
 from rdflib.plugins.parsers.notation3 import N3Parser, SinkParser
 from rdflib_canon import CanonicalizedGraph
 
-from knom import LOG
+from knom.util import LOG
 
 EX = Namespace("http://example.com/")
 var_a = Variable("a")

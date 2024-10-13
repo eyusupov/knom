@@ -8,14 +8,11 @@ from rdflib.namespace import NamespaceManager
 from rdflib.term import Node
 
 from knom import (
-    LOG,
-    get_body,
-    get_head,
     single_rule,
 )
 from knom.builtins import BUILTINS
 from knom.typing import Bindings, Triple
-from knom.util import add_triples
+from knom.util import LOG, add_triples, get_body, get_head
 
 logger = logging.getLogger(__name__)
 
@@ -175,7 +172,10 @@ def stratify_rules(rules: Graph, rules_dependencies: RulesDependencies | None = 
 
 
 def is_negative(rule: Rule) -> bool:
-    return any(p == NEGATION_PREDICATE for s, p, o in get_head(rule))
+    head  = get_head(rule)
+    if isinstance(head, Graph):
+        return any(p == NEGATION_PREDICATE for s, p, o in head)
+    return False
 
 
 def get_guard(rule1: Rule, rule2: Rule) -> tuple[Graph, Graph]:

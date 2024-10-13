@@ -8,62 +8,37 @@ from rdflib.term import Node
 
 from knom.builtins import BUILTINS, STRING
 from knom.typing import Bindings, Mask, Triple
-from knom.util import LOG, print_triple
+from knom.util import get_body, get_head, print_triple
 
 logger = logging.getLogger(__name__)
 
 
-def get_head(rule: Triple) -> Variable | BNode | Graph:
-    s, p, o = rule
-    if p == LOG.implies:
-        head = s
-    elif p == LOG.impliedBy:
-        head = o
-    else:
-        raise AssertionError
-    assert isinstance(head, Variable | BNode | Graph)
-    return head
-
-
-def get_body(rule: Triple) -> Variable | Graph:
-    s, p, o = rule
-    if p == LOG.implies:
-        body_ = o
-    elif p == LOG.impliedBy:
-        body_ = s
-    else:
-        raise AssertionError
-    assert isinstance(body_, Variable | Graph)
-    return body_
-
-
 def bind_node(
     head_node: Node,
-    fact_node: Node,
+    body_node: Node,
     bindings: Bindings | None = None,
 ) -> Iterator[Bindings]:
     if bindings is None:
         bindings = {}
-    if isinstance(fact_node, Variable):
+    if isinstance(body_node, Variable):
         return
     if isinstance(head_node, URIRef | Literal):
-        if head_node != fact_node:
+        if head_node != body_node:
             return
         yield bindings
     elif isinstance(head_node, BNode | Variable):
-        if bindings.get(head_node, fact_node) != fact_node:
-            if head_node != fact_node:
+        if bindings.get(head_node, body_node) != body_node:
+            if head_node != body_node:
                 return
             yield bindings
         else:
             new_bindings = bindings.copy()
-            new_bindings[head_node] = fact_node
+            new_bindings[head_node] = body_node
             yield new_bindings
     elif isinstance(head_node, Graph):
-        if not isinstance(fact_node, Graph):
-            return
+        if not isinstance(body_node, Graph): return
         head = set(head_node)
-        yield from match_rule(head.pop(), head, cast(Graph, fact_node), bindings)
+        yield from match_rule(head.pop(), head, cast(Graph, body_node), bindings)
     else:
         raise TypeError
 
@@ -205,12 +180,11 @@ def fire_rule(rule: Triple, bindings: Bindings) -> Iterator[Triple]:
 def single_rule(facts: Graph, rule: Triple) -> Iterator[Triple]:
     logger.debug("single_rule")
     head_graph = get_head(rule)
-    assert isinstance(head_graph, Graph)
-    head = set(head_graph)
-    if head == set():
+    head_set = set(head_graph)
+    if head_set == set():
         yield from cast(Graph, get_body(rule))
         return
-    next_head, remaining = get_next_head((None, None, None), head, {})
+    next_head, remaining = get_next_head((None, None, None), head_set, {})
     for bindings in match_rule(next_head, remaining, facts, {}):
         yield from fire_rule(rule, bindings)
 
