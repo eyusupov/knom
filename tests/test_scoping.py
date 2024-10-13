@@ -1,10 +1,9 @@
 from rdflib import Graph, URIRef
 
-from knom.stratified import stratify_rules
-from knom.util import print_rule
+from knom.stratified import stratified
 from knom.util import split_rules_and_facts
 
-from . import EX, generate_tests_from_manifests
+from . import generate_tests_from_manifests, postprocess
 
 MANIFEST_PATH = "tests/n3/scoping-manifests.n3"
 
@@ -13,13 +12,10 @@ def pytest_generate_tests(metafunc) -> None:  # noqa: ANN001
     generate_tests_from_manifests(MANIFEST_PATH, metafunc)
 
 
-def test_rules_with_scoping(action: URIRef, result: URIRef) -> None:
-    g = Graph().parse(location=action, format="n3")
-    rules, facts = split_rules_and_facts(g)
-    stratified_rules = stratify_rules(rules)
-    for strata in stratified_rules:
-        print("strata")
-        for rule in strata:
-            print(print_rule(rule))
-    expected_graph = Graph().parse(location=result, format="n3")
-    expected_node = expected_graph.value(EX.Result, EX.stratas, None)
+def test_scoping(action: URIRef, result: URIRef) -> None:
+    action_graph = Graph().parse(location=action, format="n3")
+    rules, facts = split_rules_and_facts(action_graph)
+    output = stratified(facts, rules)
+    result_graph = Graph().parse(location=result, format="n3")
+
+    assert postprocess(output) == postprocess(result_graph)

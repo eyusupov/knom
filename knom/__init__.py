@@ -36,7 +36,8 @@ def bind_node(
             new_bindings[head_node] = body_node
             yield new_bindings
     elif isinstance(head_node, Graph):
-        if not isinstance(body_node, Graph): return
+        if not isinstance(body_node, Graph):
+            return
         head = set(head_node)
         yield from match_rule(head.pop(), head, cast(Graph, body_node), bindings)
     else:
