@@ -1,9 +1,6 @@
 from rdflib import URIRef
 
-from . import (
-    generate_tests_from_manifests,
-    run_n3_tests
-)
+from . import generate_tests_from_manifests, run_n3_tests
 
 
 def pytest_generate_tests(metafunc) -> None:  # noqa: ANN001

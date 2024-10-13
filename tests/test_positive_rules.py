@@ -1,4 +1,4 @@
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Graph, URIRef
 
 from knom.stratified import stratified
 from knom.util import split_rules_and_facts
