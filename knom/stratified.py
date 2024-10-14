@@ -40,6 +40,8 @@ def node_depends(body_node: Node, head_node: Node, bnodes: Bindings) -> bool:
 
 
 def depends(body_triple: Triple, head_triple: Triple, bnodes: Bindings) -> bool:
+    if isinstance(head_triple, Variable | BNode):
+        return True
     return body_triple[1] not in BUILTINS and \
         head_triple[1] not in BUILTINS and \
         all(
@@ -49,16 +51,12 @@ def depends(body_triple: Triple, head_triple: Triple, bnodes: Bindings) -> bool:
 
 
 def clause_dependencies(
-    head: Iterable[Triple] | Variable,
-    body: Iterable[Triple] | Variable,
+    head: Iterable[Triple] | Variable | BNode,
+    body: Iterable[Triple] | Variable | BNode,
     bnodes: Bindings | None = None,
 ) -> Iterable[frozenset[Triple]]:
     if bnodes is None:
         bnodes = {}
-    # something => body
-    # head => something2
-    assert not isinstance(head, Variable)
-    #assert not isinstance(body, Variable)
 
     complete_head = frozenset(head)
     complete_body = frozenset(body)
@@ -212,7 +210,8 @@ def with_guard(facts: Graph, rule: Rule) -> Iterable[Triple]:
     assert len(guard) > 0
     logger.debug("querying guard")
     add_triples(guard_facts, single_rule(facts, (guard, LOG.implies, guard)))
-    # Guard facts miss the first elements (queried in next line), so the consecutive recursions will not recreate new nodes once more
+    # Guard facts miss the first elements (queried in next line),
+    # so the consecutive recursions will not recreate new nodes once more
     logger.debug("querying rest")
     add_triples(old_inferred, single_rule(facts, (rest, LOG.implies, rest))) # Not really inferred, but still
 
