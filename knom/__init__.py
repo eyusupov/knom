@@ -182,9 +182,6 @@ def single_rule(facts: Graph, rule: Triple) -> Iterator[Triple]:
     logger.debug("single_rule")
     head_graph = get_head(rule)
     head_set = set(head_graph)
-    if head_set == set():
-        yield from cast(Graph, get_body(rule))
-        return
     next_head, remaining = get_next_head((None, None, None), head_set, {})
     for bindings in match_rule(next_head, remaining, facts, {}):
         yield from fire_rule(rule, bindings)
