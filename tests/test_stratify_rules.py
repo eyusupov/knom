@@ -1,8 +1,7 @@
 from rdflib import Graph, URIRef
 
 from knom.stratified import stratify_rules
-from knom.util import print_rule
-from knom.util import split_rules_and_facts
+from knom.util import print_rule, split_rules_and_facts
 
 from . import EX, generate_tests_from_manifests
 

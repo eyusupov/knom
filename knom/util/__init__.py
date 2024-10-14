@@ -10,6 +10,30 @@ from knom.typing import Triple
 LOG = Namespace("http://www.w3.org/2000/10/swap/log#")
 
 
+def get_head(rule: Triple) -> Variable | BNode | Graph:
+    s, p, o = rule
+    if p == LOG.implies:
+        head = s
+    elif p == LOG.impliedBy:
+        head = o
+    else:
+        raise AssertionError
+    assert isinstance(head, Variable | BNode | Graph)
+    return head
+
+
+def get_body(rule: Triple) -> Variable | Graph:
+    s, p, o = rule
+    if p == LOG.implies:
+        body_ = o
+    elif p == LOG.impliedBy:
+        body_ = s
+    else:
+        raise AssertionError
+    assert isinstance(body_, Variable | Graph)
+    return body_
+
+
 def only_one(some: Iterable) -> Any:  # noqa: ANN401
     iter_ = iter(some)
     value = next(iter_)
@@ -80,61 +104,15 @@ def print_graph(formula: Graph) -> str:
 
 def print_rule(rule: Triple) -> str:
     s, p, o = rule
-    if isinstance(s, Graph):
-        subj = print_triple(s)
-    else:
-        subj = node_repr(s)
 
-    if isinstance(o, Graph):
-        obj = print_triple(o)
-    else:
-        obj = node_repr(s)
+    subj = print_triple(s) if isinstance(s, Graph) else node_repr(s)
+    obj = print_triple(o) if isinstance(o, Graph) else node_repr(s)
 
     if p == LOG.implies:
         return f"{subj} => {obj}"
     if p == LOG.impliedBy:
         return f"{subj} <= {obj}"
     raise ValueError
-
-
-def bnode_key(triple: Triple) -> tuple[Node]:
-    return tuple(n for n in triple if not isinstance(n, BNode))
-
-
-def compact_bnodes(g: Graph, head: set[Triple]) -> set[Triple]:
-    # TODO: think if we need it. Probably it is useless in a normal program.
-    # After removing some clauses, non-negative head might contain pathological case
-    # To avoid this, we try to compact the blank nodes
-    # Maybe it's also worth doing it in the general case.
-
-    bnode_masks = {}
-    for triple in head:
-        for node in triple:
-            if isinstance(node, BNode):
-                if node not in bnode_masks:
-                    bnode_masks[node] = set()
-                bnode_masks[node].add(bnode_key(triple))
-
-    bnode_idx = {}
-    for node, mask in bnode_masks.items():
-        key = frozenset(mask)
-        if key not in bnode_idx:
-            bnode_idx[key] = set()
-        bnode_idx[key].add(node)
-
-    new_bnodes = {}
-    for nodes in bnode_idx.values():
-        bnode = BNode()
-        for node in nodes:
-            new_bnodes[node] = bnode
-
-    compacted_head = QuotedGraph(store=g.store, identifier=BNode())
-    for triple in head:
-        compacted_triple = tuple(new_bnodes.get(node, node) for node in triple)
-        compacted_head.add(compacted_triple)
-
-    print("compacted from", len(head), "to", len(compacted_head))
-    return compacted_head
 
 
 def split_rules_and_facts(graph: Graph) -> tuple[Graph, Graph]:

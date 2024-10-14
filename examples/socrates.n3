@@ -1,4 +1,4 @@
-@prefix : <http://example.com>.
+@prefix : <http://example.com/>.
 
 :socrates :a :human.
 :human :a :mortal.
