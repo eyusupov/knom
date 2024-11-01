@@ -30,11 +30,10 @@ def bind_node(
         if bindings.get(head_node, body_node) != body_node:
             if head_node != body_node:
                 return
-            yield bindings
         else:
-            new_bindings = bindings.copy()
-            new_bindings[head_node] = body_node
-            yield new_bindings
+            bindings = bindings.copy()
+            bindings[head_node] = body_node
+        yield bindings
     elif isinstance(head_node, Graph):
         if not isinstance(body_node, Graph):
             return
@@ -77,7 +76,7 @@ def mask(head_clause: Triple, bindings: Bindings | None = None) -> Mask:
 
 
 def head_sort_key(
-    prev_clause: Triple, clause: set[Triple], bindings: Bindings
+    prev_clause: Triple | tuple[None, None, None], clause: Triple, bindings: Bindings
 ) -> tuple:
     ps, pp, po = prev_clause
     s, p, o = clause
@@ -181,6 +180,7 @@ def fire_rule(rule: Triple, bindings: Bindings) -> Iterator[Triple]:
 def single_rule(facts: Graph, rule: Triple) -> Iterator[Triple]:
     logger.debug("single_rule")
     head_graph = get_head(rule)
+    assert isinstance(head_graph, Graph)
     head_set = set(head_graph)
     next_head, remaining = get_next_head((None, None, None), head_set, {})
     for bindings in match_rule(next_head, remaining, facts, {}):
