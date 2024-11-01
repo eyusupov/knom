@@ -80,7 +80,7 @@ def node_repr(
 
 
 def print_triple(
-    triple: Triple, namespace_manager: NamespaceManager | None = None
+    triple: Triple | Graph, namespace_manager: NamespaceManager | None = None
 ) -> str:
     if isinstance(triple, Graph):
         return print_graph(triple)

@@ -2,7 +2,7 @@ import logging
 from collections.abc import Iterable
 from typing import cast
 
-from rdflib import BNode, Graph, URIRef, Variable
+from rdflib import BNode, Graph, Variable
 from rdflib.graph import ConjunctiveGraph, QuotedGraph
 from rdflib.namespace import NamespaceManager
 from rdflib.term import Node
@@ -11,13 +11,10 @@ from knom import (
     single_rule,
 )
 from knom.builtins import BUILTINS
-from knom.typing import Bindings, Triple
+from knom.typing import Bindings, Rule, RulesDependencies, Triple
 from knom.util import LOG, add_triples, get_body, get_head
 
 logger = logging.getLogger(__name__)
-
-Rule = tuple[QuotedGraph, URIRef, QuotedGraph | Variable]
-RulesDependencies = dict[Rule, set[Rule]]
 
 NEGATION_PREDICATE = LOG.notIncludes
 
@@ -165,8 +162,7 @@ def stratify_rules(rules: Graph, rules_dependencies: RulesDependencies | None = 
     for rule in rules:
         if rule not in state.index:
             yield from stratify_rule(
-                    rule, rules_dependencies, state, rules.namespace_manager
-                )
+                        rule, rules_dependencies, state, rules.namespace_manager)
 
 
 def is_negative(rule: Rule) -> bool:

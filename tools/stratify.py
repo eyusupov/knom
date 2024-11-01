@@ -11,5 +11,5 @@ stratified_rules = stratify_rules(rules)
 for i, strata in enumerate(stratified_rules):
     g = Graph(namespace_manager=rules.namespace_manager)
     add_triples(g, strata)
-    print("strata", i, ", rules:", len(strata))
-    print(g.serialize(format="n3"))
+    print("strata", i, ", rules:", len(strata))  # noqa: T201
+    print(g.serialize(format="n3"))  # noqa: T201
