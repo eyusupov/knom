@@ -54,9 +54,15 @@ def clause_dependencies(
 ) -> Iterable[frozenset[Triple]]:
     if bnodes is None:
         bnodes = {}
-
-    complete_head = frozenset(head)
-    complete_body = frozenset(body)
+    
+    if isinstance(head, Variable | BNode):
+        complete_head = frozenset([head])
+    else:
+        complete_head = frozenset(head)
+    if isinstance(body, Variable | BNode):
+        complete_body = frozenset([body])
+    else:
+        complete_body = frozenset(body)
 
     try:
         next(iter(body))
@@ -99,7 +105,6 @@ def head_depends_on_body(
 
 def firing_rules(rule_with_head: Rule, rules_with_body: Graph) -> set[Rule]:
     head = get_head(rule_with_head)
-
     result = set()
     for rule_with_body in rules_with_body:
         if head_depends_on_body(head, get_body(rule_with_body)):
@@ -273,10 +278,12 @@ def stratified_rule(facts: Graph, rule: Triple, rules_dependencies: RulesDepende
     has_bnodes = any(isinstance(n, BNode) for triple in get_body(rule) for n in triple)
     if is_negative(rule):
         method = negative_rule
-    elif len(get_head(rule)) > 0 and recursive and has_bnodes:
-        method = with_guard
     else:
-        method = single_rule
+        head = get_head(rule)
+        if len(head) > 0 and recursive and has_bnodes and not isinstance(head, Variable | BNode):
+            method = with_guard
+        else:
+            method = single_rule
     logger.debug("using %s", method)
     yield from method(facts, rule)
 
