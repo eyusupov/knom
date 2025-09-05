@@ -1,0 +1,7 @@
+@prefix : <http://example.com/>.
+
+:steven :says { :superman :can :fly }.
+
+{
+  :steven :says ?x
+} => ?x.
