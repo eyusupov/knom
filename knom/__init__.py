@@ -179,12 +179,19 @@ def fire_rule(rule: Triple, bindings: Bindings) -> Iterator[Triple]:
 
 def single_rule(facts: Graph, rule: Triple) -> Iterator[Triple]:
     logger.debug("single_rule")
-    head_graph = get_head(rule)
-    assert isinstance(head_graph, Graph)
-    head_set = set(head_graph)
-    next_head, remaining = get_next_head((None, None, None), head_set, {})
-    for bindings in match_rule(next_head, remaining, facts, {}):
-        yield from fire_rule(rule, bindings)
+    head = get_head(rule)
+    if isinstance(head, Variable | BNode):
+        for fact in facts:
+            g = Graph()
+            g.add(fact)
+            bindings = {head: g}
+            yield from fire_rule(rule, bindings)
+    else:
+        assert isinstance(head, Graph)
+        head_set = set(head)
+        next_head, remaining = get_next_head((None, None, None), head_set, {})
+        for bindings in match_rule(next_head, remaining, facts, {}):
+            yield from fire_rule(rule, bindings)
 
 
 def single_pass(facts: Graph, rules: Iterable[Triple]) -> Iterator[Triple]:
