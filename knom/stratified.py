@@ -3,7 +3,7 @@ from collections.abc import Iterable
 from typing import cast
 
 from rdflib import BNode, Graph, Variable
-from rdflib.graph import ConjunctiveGraph, QuotedGraph
+from rdflib.graph import QuotedGraph
 from rdflib.namespace import NamespaceManager
 from rdflib.term import Node
 
@@ -201,7 +201,7 @@ def with_guard(facts: Graph, rule: Rule) -> Iterable[Triple]:
 
     guard_facts = Graph()
     old_inferred = Graph()
-    all_inferred = ConjunctiveGraph()
+    all_inferred = Graph()
 
     assert len(guard) > 0
     logger.debug("querying guard")
@@ -283,7 +283,7 @@ def stratified_rule(facts: Graph, rule: Triple, rules_dependencies: RulesDepende
 
 def walk(facts: Graph, strata: list[Rule], triggered_rules: RulesDependencies) -> Iterable[Triple]:
     rules = strata.copy()
-    all_inferred = ConjunctiveGraph()
+    all_inferred = Graph()
     while len(rules) > 0:
         rule = rules.pop(0)
         new_inferred = Graph(namespace_manager=facts.namespace_manager)
@@ -304,7 +304,7 @@ def walk(facts: Graph, strata: list[Rule], triggered_rules: RulesDependencies) -
 
 
 def _stratified(facts: Graph, rules: Graph) -> Iterable[Triple]:
-    closure = ConjunctiveGraph()
+    closure = Graph()
     closure += facts # TODO: avoid copying facts, important for real life scenarios
     rules_dependencies = get_rules_dependencies(rules)
 
