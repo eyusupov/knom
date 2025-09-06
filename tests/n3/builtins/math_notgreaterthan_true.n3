@@ -1,2 +1,4 @@
+@prefix math: <http://www.w3.org/2000/10/swap/math#>.
 @prefix : <http://example.com/>.
-:result :is :true.
+
+{ 1 math:notGreaterThan 2 } => { :result :is :true }.
