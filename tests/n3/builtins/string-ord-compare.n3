@@ -1,5 +1,4 @@
 @prefix string: <http://www.w3.org/2000/10/swap/string#>.
 @prefix : <http://example.com/>.
 
-:a :b :c.
 { 65 string:ord "A" } => { :result :is :true }.
