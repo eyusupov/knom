@@ -20,5 +20,6 @@ BUILTINS: dict[URIRef, Callable[[Node, Node, Bindings], Iterable[Bindings]]] = {
     STRING.notLessThan: string.not_less_than,
     STRING.notGreaterThan: string.not_greater_than,
     STRING.ord: string.ord_,
-    LOG.includes: log.includes
+    LOG.forAllIn: log.for_all_in,
+    LOG.includes: log.includes,
 }

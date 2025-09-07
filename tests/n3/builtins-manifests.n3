@@ -66,6 +66,26 @@
       mf:result <builtins/string-ord-variable-ref.n3>
     ]
     [
+      mf:name "log:forAllIn with current document";
+      mf:action <builtins/log-forallin-current-doc.n3>;
+      mf:result <builtins/log-forallin-current-doc-ref.n3>
+    ]
+    [
+      mf:name "log:forAllIn with current document is false";
+      mf:action <builtins/log-forallin-current-doc-false.n3>;
+      mf:result <builtins/log-forallin-current-doc-false-ref.n3>
+    ]
+    [
+      mf:name "log:forAllIn scoped";
+      mf:action <builtins/log-forallin-scoped.n3>;
+      mf:result <builtins/log-forallin-scoped-ref.n3>
+    ]
+    [
+      mf:name "log:forAllIn scoped is false";
+      mf:action <builtins/log-forallin-scoped-false.n3>;
+      mf:result <builtins/log-forallin-scoped-false-ref.n3>
+    ]
+    [
       mf:name "log:includes with current document";
       mf:action <builtins/log-includes-current-doc.n3>;
       mf:result <builtins/log-includes-current-doc-ref.n3>
