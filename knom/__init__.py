@@ -4,9 +4,11 @@ from hashlib import sha256
 from typing import cast
 
 from rdflib import BNode, Graph, Literal, URIRef, Variable
+from rdflib.collection import Collection
+from rdflib.namespace import RDF
 from rdflib.term import Node
 
-from knom.builtins import BUILTINS, STRING
+from knom.builtins import BUILTINS, STRING, LOG
 from knom.typing import Bindings, Mask, Triple
 from knom.util import get_body, get_head, print_triple
 
@@ -82,7 +84,10 @@ def head_sort_key(
     s, p, o = clause
 
     key = (
+        p not in RDF.first,
+        p not in RDF.rest,
         p not in BUILTINS,
+        p == LOG.forAllIn or p == LOG.collectAllIn or p == LOG.conjunction or p == LOG.dtlit or p == LOG.langlit or p == STRING.concatenation,
         p == STRING.ord,
         ps == s,
         pp == p,
@@ -94,10 +99,10 @@ def head_sort_key(
 
 
 def get_next_head(
-    prev_clause: Triple | tuple[None, None, None], head: set[Triple], bindings: Bindings
+    prev_clause: Triple | tuple[None, None, None], head: Graph, bindings: Bindings
 ) -> tuple:
     # TODO: fix hex char range handling (builtins results are used in other builtins)
-    if head == set():
+    if len(head) == 0:
         return None, set()
     # TODO: there is still varying performance from run to run, investigate
     next_head = max(
@@ -105,13 +110,15 @@ def get_next_head(
     )
     if next_head:
         logger.debug("head clause: %s, bindings %s", next_head, bindings)
-    remaining = head.copy()
-    remaining.remove(next_head)
+    remaining = Graph()
+    for triple in head:
+        if triple != next_head:
+            remaining.add(triple)
     return next_head, remaining
 
 
 def _match_rule(
-    head_clause: Triple, head: set[Triple], facts: Graph, bindings: Bindings
+    head_clause: Triple, head: Graph, facts: Graph, bindings: Bindings
 ) -> Iterator[Bindings]:
     logger.debug("match_rule")
     if head_clause is None:
@@ -120,6 +127,23 @@ def _match_rule(
         s, p, o = head_clause
         if p in BUILTINS:
             assert isinstance(p, URIRef)
+            col = list(Collection(head, s))
+            if len(col) > 0:
+                ln = s
+                while True:
+                    found = False
+                    for triple in head.triples((ln, RDF.first, None)):
+                        head.remove(triple)
+                        found = True
+                    if not found:
+                        break
+                    for triple in head.triples((ln, RDF.rest, None)):
+                        ln = triple[2]
+                        head.remove(triple)
+                        found = True
+                    if not found:
+                        break
+                s = col
             # TODO: copy bindings on update only
             for binding in BUILTINS[p](s, o, bindings.copy(), facts):
                 next_head, remaining = get_next_head(head_clause, head, bindings)
@@ -134,11 +158,10 @@ def _match_rule(
 
 
 def match_rule(
-    head: Graph, facts: Graph
+    head: Graph, facts: Graph, bindings: Bindings = {}
 ) -> Iterator[Bindings]:
-    head_set = set(head)
-    next_head, remaining = get_next_head((None, None, None), head_set, {})
-    return _match_rule(next_head, remaining, facts, {})
+    next_head, remaining = get_next_head((None, None, None), head, bindings)
+    return _match_rule(next_head, remaining, facts, bindings)
 
 
 def instantiate_bnodes(body: Graph, bindings: Bindings) -> None:
