@@ -5,10 +5,11 @@ from rdflib.term import Node
 
 from knom.typing import Bindings
 
-from . import math, string
+from . import math, string, log
 
 STRING = Namespace("http://www.w3.org/2000/10/swap/string#")
 MATH = Namespace("http://www.w3.org/2000/10/swap/math#")
+LOG = Namespace("http://www.w3.org/2000/10/swap/log#")
 
 # TODO: build with annotations or something
 BUILTINS: dict[URIRef, Callable[[Node, Node, Bindings], Iterable[Bindings]]] = {
@@ -19,4 +20,5 @@ BUILTINS: dict[URIRef, Callable[[Node, Node, Bindings], Iterable[Bindings]]] = {
     STRING.notLessThan: string.not_less_than,
     STRING.notGreaterThan: string.not_greater_than,
     STRING.ord: string.ord_,
+    LOG.includes: log.includes
 }
