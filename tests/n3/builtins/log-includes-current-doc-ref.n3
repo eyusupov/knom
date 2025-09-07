@@ -1,0 +1,4 @@
+@prefix : <http://example.org/>.
+
+:result :is :Felix.
+:result :is :Tom.

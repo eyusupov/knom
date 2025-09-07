@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 
-from rdflib import BNode, Literal, Variable
+from rdflib import BNode, Literal, Variable, Graph
 from rdflib.term import Node
 
 from knom.typing import Bindings
@@ -12,7 +12,7 @@ from .util import _get_cmp_args
 # where:
 # $s: xsd:string
 # $o: xsd:string
-def not_less_than(s: Node, o: Node, bindings: Bindings) -> Iterator[Bindings]:
+def not_less_than(s: Node, o: Node, bindings: Bindings, facts: Graph) -> Iterator[Bindings]:
     s_, o_ = _get_cmp_args(s, o, bindings)
     if s_ is None or o_ is None:
         return
@@ -20,7 +20,7 @@ def not_less_than(s: Node, o: Node, bindings: Bindings) -> Iterator[Bindings]:
         yield bindings
 
 
-def not_greater_than(s: Node, o: Node, bindings: Bindings) -> Iterator[Bindings]:
+def not_greater_than(s: Node, o: Node, bindings: Bindings, facts: Graph) -> Iterator[Bindings]:
     s_, o_ = _get_cmp_args(s, o, bindings)
     if s_ is None or o_ is None:
         return
@@ -32,7 +32,7 @@ def not_greater_than(s: Node, o: Node, bindings: Bindings) -> Iterator[Bindings]
 # where:
 # $s: xsd:string
 # $o: xsd:integer
-def ord_(s: Node, o: Node, bindings: Bindings) -> Iterator[Bindings]:
+def ord_(s: Node, o: Node, bindings: Bindings, facts: Graph) -> Iterator[Bindings]:
     if isinstance(s, Literal) or s in bindings:
         s_ = bindings[s] if isinstance(s, Variable | BNode) else s
         if isinstance(o, Variable | BNode):

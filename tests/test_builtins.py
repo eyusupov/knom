@@ -9,5 +9,5 @@ def pytest_generate_tests(metafunc) -> None:  # noqa: ANN001
     )
 
 
-def test_negative_rules(action: URIRef, result: URIRef) -> None:
+def test_builtins(action: URIRef, result: URIRef) -> None:
     run_n3_tests(action, result)

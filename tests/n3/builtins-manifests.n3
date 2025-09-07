@@ -65,5 +65,20 @@
       mf:action <builtins/string-ord-variable.n3>;
       mf:result <builtins/string-ord-variable-ref.n3>
     ]
+    [
+      mf:name "log:includes with current document";
+      mf:action <builtins/log-includes-current-doc.n3>;
+      mf:result <builtins/log-includes-current-doc-ref.n3>
+    ]
+    [
+      mf:name "log:includes with the formula";
+      mf:action <builtins/log-includes-formula.n3>;
+      mf:result <builtins/log-includes-formula-ref.n3>
+    ]
+    [
+      mf:name "log:includes with multiple vars";
+      mf:action <builtins/log-includes-current-doc-multiple-vars.n3>;
+      mf:result <builtins/log-includes-current-doc-multiple-vars-ref.n3>
+    ]
   ).
 

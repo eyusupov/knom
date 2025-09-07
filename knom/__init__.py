@@ -38,7 +38,7 @@ def bind_node(
         if not isinstance(body_node, Graph):
             return
         head = set(head_node)
-        yield from match_rule(head.pop(), head, cast(Graph, body_node), bindings)
+        yield from _match_rule(head.pop(), head, cast(Graph, body_node), bindings)
     else:
         raise TypeError
 
@@ -110,7 +110,7 @@ def get_next_head(
     return next_head, remaining
 
 
-def match_rule(
+def _match_rule(
     head_clause: Triple, head: set[Triple], facts: Graph, bindings: Bindings
 ) -> Iterator[Bindings]:
     logger.debug("match_rule")
@@ -121,16 +121,24 @@ def match_rule(
         if p in BUILTINS:
             assert isinstance(p, URIRef)
             # TODO: copy bindings on update only
-            for binding in BUILTINS[p](s, o, bindings.copy()):
+            for binding in BUILTINS[p](s, o, bindings.copy(), facts):
                 next_head, remaining = get_next_head(head_clause, head, bindings)
-                yield from match_rule(next_head, remaining, facts, binding)
+                yield from _match_rule(next_head, remaining, facts, binding)
         else:
             mask_ = mask(head_clause, bindings)
             triples = facts.triples(mask_)
             for fact in triples:
                 for binding in bind(head_clause, fact, bindings):
                     next_head, remaining = get_next_head(head_clause, head, bindings)
-                    yield from match_rule(next_head, remaining, facts, binding)
+                    yield from _match_rule(next_head, remaining, facts, binding)
+
+
+def match_rule(
+    head: Graph, facts: Graph
+) -> Iterator[Bindings]:
+    head_set = set(head)
+    next_head, remaining = get_next_head((None, None, None), head_set, {})
+    return _match_rule(next_head, remaining, facts, {})
 
 
 def instantiate_bnodes(body: Graph, bindings: Bindings) -> None:
@@ -188,9 +196,7 @@ def single_rule(facts: Graph, rule: Triple) -> Iterator[Triple]:
             yield from fire_rule(rule, bindings)
     else:
         assert isinstance(head, Graph)
-        head_set = set(head)
-        next_head, remaining = get_next_head((None, None, None), head_set, {})
-        for bindings in match_rule(next_head, remaining, facts, {}):
+        for bindings in match_rule(head, facts):
             yield from fire_rule(rule, bindings)
 
 
